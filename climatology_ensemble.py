@@ -76,7 +76,7 @@ def daily_climatology_p_et_ensemble(daily_input,radius=2/3):
     evap_q25=pd.DataFrame(data=None, columns=evap_30.columns)
 
     #get the range as 2/3 of the mean difference between the quantile and the mean precipitation over the year.
-    radius=2/3
+    
     range75= radius*(prec_q75.mean().mean()-prec_30).mean().mean()
     range25= radius*(-prec_q25.mean().mean()+prec_30).mean().mean()
 
