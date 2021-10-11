@@ -75,7 +75,7 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, n_splits, test_size, ra
             # modify the X matrix by substituting the climatology to the real meteo vars for lt months.
             change_dest = [c for c in X_climTP.columns if c.split('_')[1] == str(-lt + 1)]
             change_source = [c.split('_')[0] for c in change_dest]
-            X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source].values
+            X_climTP.loc[:, change_dest] = daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source].values
             
             #predict
             target[f'climTP_lt{lt}'] = svr_model_tuned.predict(X_climTP)
@@ -94,7 +94,8 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, n_splits, test_size, ra
             X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source_75].values
             target[f'climTP_lt{lt}_Q75'] = svr_model_tuned.predict(X_climTP_Q75)
 
-            target['split']= np.repeat(j,test_size)
+            
+        target['split']= np.repeat(j,test_size)
             
         #add this split prediction to the 
         prediction=prediction.append(pd.DataFrame(data=target, index=test_dates))
@@ -222,7 +223,43 @@ def plot_prediction(prediction):
         plt.ylabel('30days discharge average [m^3/sec]')
 
         plt.legend(['TRUE DISCHARGE', 'DISCHARGE CLIMATOLOGY', 'LEAD TIME = 1','LEAD TIME = 4'])    
-        plt.title("Precipitation variability(Q= 25 and 75)(for other variables simple mean is used) mapped on the prediction discharge")
+        plt.title("Precipitation variability(Q= 25 and 75) mapped on the prediction discharge")
+    return;
+
+
+
+def plot_anomalies(prediction):
+
+    splits=prediction['split'].max()
+    for i in range(splits+1):
+        query=f'split=={i}'
+        #query='split==' + str(i)
+        pred=prediction.query(query)
+        pred.loc[:,'date']= pred.index
+
+        ax,fig=plt.subplots(figsize=(20,10))
+        #plot the real
+        sns.lineplot(y=("true_runoff"),x="date",data=pred,color='red',linewidth=1.3,legend='auto')
+        sns.lineplot(y=("trueTP"),x="date",data=pred,color='green',linewidth=1.3,legend='auto')
+
+
+        #plot the lead_time_
+        lt1=pred[["climTP_lt1","climTP_lt1_Q25","climTP_lt1_Q75"]]
+        #lt1.columns=np.repeat('climatologia_lt1_ensemple_prec',3)
+        sns.lineplot(data=lt1["climTP_lt1"],legend='auto')
+        plt.fill_between(x=lt1.index, y1=lt1['climTP_lt1_Q25'], y2=lt1['climTP_lt1_Q75'], alpha=0.2)
+
+        #plot the lead_time_
+        lt4=pred[["climTP_lt4","climTP_lt4_Q25","climTP_lt4_Q75"]]
+        #lt4.columns=np.repeat('climatologia_lt4_ensemple_prec',3)
+        sns.lineplot(data=lt4["climTP_lt4"], palette=['green'],legend='auto')
+        plt.fill_between(x=lt4.index, y1=lt4['climTP_lt4_Q25'], y2=lt4['climTP_lt4_Q75'], alpha=0.2)
+
+        plt.axhline(0,ls='--')
+        plt.ylabel('30days discharge average [m^3/sec]')
+
+        plt.legend(['TRUE DISCHARGE','LEAD TIME = 0','LEAD TIME = 1','LEAD TIME = 4'])    
+        plt.title("Anomalies plotting with precipitation variability(Q= 25 and 75) mapped on the prediction discharge")
     return;
 
 

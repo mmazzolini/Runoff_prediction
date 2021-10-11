@@ -550,3 +550,74 @@ def spatial_avg_daily_input(daily_input):
     daily_input=daily_input.drop(columns = p_columns)
     
     return daily_input;
+
+
+def spatial_stats_daily_input(daily_input):
+    
+    new_daily_input=pd.DataFrame(daily_input.Q)
+    
+    t_columns = [c for c in daily_input.columns if c[0] =='T']
+    t_vars=daily_input[t_columns]
+    new_daily_input['T'] = t_vars.mean(axis=1)
+    new_daily_input['T_5']=t_vars.quantile(q=0.05,axis=1)
+    new_daily_input['T_25']=t_vars.quantile(q=0.25,axis=1)
+    new_daily_input['T_75']=t_vars.quantile(q=0.75,axis=1)
+    new_daily_input['T_95']=t_vars.quantile(q=0.95,axis=1)
+    
+    e_columns = [c for c in daily_input.columns if c[0] =='E']
+    e_vars=daily_input[e_columns]
+    new_daily_input['E'] = e_vars.mean(axis=1)
+    new_daily_input['E_5']=e_vars.quantile(q=0.05,axis=1)
+    new_daily_input['E_25']=e_vars.quantile(q=0.25,axis=1)
+    new_daily_input['E_75']=e_vars.quantile(q=0.75,axis=1)
+    new_daily_input['E_95']=e_vars.quantile(q=0.95,axis=1)
+    
+    p_columns = [c for c in daily_input.columns if c[0] =='P']
+    p_vars=daily_input[p_columns]
+    new_daily_input['P'] = p_vars.mean(axis=1)
+    new_daily_input['P_5']=p_vars.quantile(q=0.05,axis=1)
+    new_daily_input['P_25']=p_vars.quantile(q=0.25,axis=1)
+    new_daily_input['P_75']=p_vars.quantile(q=0.75,axis=1)
+    new_daily_input['P_95']=p_vars.quantile(q=0.95,axis=1)
+    
+    return new_daily_input
+
+
+
+def create_gap(train_index,test_index,gap):
+    right=((train_index+1 == test_index[0]).sum()==1) and ((train_index-1 == test_index[-1]).sum()==0)
+    centre=((train_index+1 == test_index[0]).sum()==1) and ((train_index-1 == test_index[-1]).sum()==1)
+    left = ((train_index+1 == test_index[0]).sum()==0) and ((train_index-1 == test_index[-1]).sum()==1)
+    if right:
+        train_index=train_index[0:-gap]
+
+    if left:
+        train_index=train_index[gap:]
+
+    if centre:
+        pos = np.where(train_index+1 == test_index[0])[0][0]
+        train_index=np.concatenate((train_index[:pos-gap],train_index[pos+gap:]),axis=0)
+        
+    return train_index;
+
+
+def compute_anomalies(climatologies,pred):
+    
+    #compute real climatology
+    anomalies=pd.DataFrame(pred.true_runoff-pred.runoff_clim,columns=['true_runoff'])
+    
+    #get the climatology of prediction on the wanted days
+    clim_on_test_dates = pd.DataFrame(climatologies.loc[anomalies.index.day_of_year])
+    
+    #create an array with the proper shape
+    repeated_clim=np.repeat((np.array(clim_on_test_dates.prediction)[...,np.newaxis]),
+                    pred.shape[1]-2,
+                    axis=1)
+
+    #subtract clim to predictions
+    anomalies_pred= pred.iloc[:,2:]- repeated_clim
+
+    #put together real and predicted anomalies
+    anomalies=pd.concat([anomalies,anomalies_pred],axis=1)
+
+    return anomalies
