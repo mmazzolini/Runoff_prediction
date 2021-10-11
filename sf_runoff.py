@@ -558,27 +558,27 @@ def spatial_stats_daily_input(daily_input):
     
     t_columns = [c for c in daily_input.columns if c[0] =='T']
     t_vars=daily_input[t_columns]
-    new_daily_input['T'] = t_vars.mean(axis=1)
-    new_daily_input['T_5']=t_vars.quantile(q=0.05,axis=1)
-    new_daily_input['T_25']=t_vars.quantile(q=0.25,axis=1)
-    new_daily_input['T_75']=t_vars.quantile(q=0.75,axis=1)
-    new_daily_input['T_95']=t_vars.quantile(q=0.95,axis=1)
+    new_daily_input.loc[:,'T'] = t_vars.mean(axis=1)
+    new_daily_input.loc[:,'T5']=t_vars.quantile(q=0.05,axis=1)
+    new_daily_input.loc[:,'T25']=t_vars.quantile(q=0.25,axis=1)
+    new_daily_input.loc[:,'T75']=t_vars.quantile(q=0.75,axis=1)
+    new_daily_input.insert(loc=5,column='T95',value=t_vars.quantile(q=0.95,axis=1))
     
     e_columns = [c for c in daily_input.columns if c[0] =='E']
     e_vars=daily_input[e_columns]
-    new_daily_input['E'] = e_vars.mean(axis=1)
-    new_daily_input['E_5']=e_vars.quantile(q=0.05,axis=1)
-    new_daily_input['E_25']=e_vars.quantile(q=0.25,axis=1)
-    new_daily_input['E_75']=e_vars.quantile(q=0.75,axis=1)
-    new_daily_input['E_95']=e_vars.quantile(q=0.95,axis=1)
+    new_daily_input.loc[:,'E'] = e_vars.mean(axis=1)
+    new_daily_input.loc[:,'E5']=e_vars.quantile(q=0.05,axis=1)
+    new_daily_input.loc[:,'E25']=e_vars.quantile(q=0.25,axis=1)
+    new_daily_input.loc[:,'E75']=e_vars.quantile(q=0.75,axis=1)
+    new_daily_input.loc[:,'E95']=e_vars.quantile(q=0.95,axis=1)
     
     p_columns = [c for c in daily_input.columns if c[0] =='P']
     p_vars=daily_input[p_columns]
-    new_daily_input['P'] = p_vars.mean(axis=1)
-    new_daily_input['P_5']=p_vars.quantile(q=0.05,axis=1)
-    new_daily_input['P_25']=p_vars.quantile(q=0.25,axis=1)
-    new_daily_input['P_75']=p_vars.quantile(q=0.75,axis=1)
-    new_daily_input['P_95']=p_vars.quantile(q=0.95,axis=1)
+    new_daily_input.loc[:,'P'] = p_vars.mean(axis=1)
+    new_daily_input.loc[:,'P5']=p_vars.quantile(q=0.05,axis=1)
+    new_daily_input.loc[:,'P25']=p_vars.quantile(q=0.25,axis=1)
+    new_daily_input.loc[:,'P75']=p_vars.quantile(q=0.75,axis=1)
+    new_daily_input.loc[:,'P95']=p_vars.quantile(q=0.95,axis=1)
     
     return new_daily_input
 
