@@ -91,7 +91,7 @@ def readnetcdf_in_shp(nc_fileName, shp_fileName, res=5500, plot=False):
     ds = ds.dropna(dim='x', how='all')
     ds = ds.dropna(dim='y', how='all')
 
-                        
+    counter=0                    
     # Plot the era5 gridbox and the shapefile if plot=True
     if plot:
         for x in ds.x.values:
@@ -103,10 +103,11 @@ def readnetcdf_in_shp(nc_fileName, shp_fileName, res=5500, plot=False):
                     if (k !='Lambert_Conformal'):
                         if not(ds[k].loc[dict(x=x, y=y)].isnull().all()):
                             plt.plot(x, y, marker='o', color='red')
+                            counter=counter+1
         shp_x, shp_y = shp_reproj.loc[0, 'geometry'].exterior.xy
         plt.plot(shp_x, shp_y, color='black')
         plt.axis('equal')                        
-                      
+    print(f'n of pixels{counter}')                  
     return ds
 
 
@@ -115,14 +116,14 @@ def xarray2df(xa, varnamedest,varnameor=False):
         df = {}
         for i in range(xa.y.size):
             for j in range(xa.x.size):
-                df[f'{varnamedest}{i*xa.y.size+j}'] = xa.isel(y=i, x=j).to_dataframe().iloc[:, 2]
+                df[f'{varnamedest}{i*xa.x.size+j}'] = xa.isel(y=i, x=j).to_dataframe().iloc[:, 2]
                 #pdb.set_trace()
              
     else:
         df = {}
         for i in range(xa.y.size):
             for j in range(xa.x.size):
-                df[f'{varnamedest}{i*xa.y.size+j}'] = xa.isel(y=i, x=j).to_dataframe().loc[:,varnameor]
+                df[f'{varnamedest}{i*xa.x.size+j}'] = xa.isel(y=i, x=j).to_dataframe().loc[:,varnameor]
                 #pdb.set_trace()
     
     frame=pd.DataFrame(df)
