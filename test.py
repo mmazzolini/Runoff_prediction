@@ -75,7 +75,7 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, n_splits, test_size, ra
             # modify the X matrix by substituting the climatology to the real meteo vars for lt months.
             change_dest = [c for c in X_climTP.columns if c.split('_')[1] == str(-lt + 1)]
             change_source = [c.split('_')[0] for c in change_dest]
-            X_climTP.loc[:, change_dest] = daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source].values
+            X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source].values
             
             #predict
             target[f'climTP_lt{lt}'] = svr_model_tuned.predict(X_climTP)
@@ -93,13 +93,13 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, n_splits, test_size, ra
 
             X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source_75].values
             target[f'climTP_lt{lt}_Q75'] = svr_model_tuned.predict(X_climTP_Q75)
+            #pdb.set_trace()
 
-            
         target['split']= np.repeat(j,test_size)
             
         #add this split prediction to the 
         prediction=prediction.append(pd.DataFrame(data=target, index=test_dates))
-        #pdb.set_trace()
+        
         j=j+1
 
     return prediction
@@ -181,11 +181,13 @@ def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, n_splits, test_s
 
             X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source_75].values
             target[f'climTP_lt{lt}_Q75'] = svr_model_tuned.predict(X_climTP_Q75)
+            
+            #pdb.set_trace()
+        target['split']= np.repeat(j,test_size)
 
-            target['split']= np.repeat(j,test_size)
             
         #add this split prediction to the 
-        prediction=prediction.append(pd.DataFrame(data=target, index=test_dates))
+        prediction = prediction.append(pd.DataFrame(data=target, index=test_dates))
         #pdb.set_trace()
         j=j+1
 
@@ -256,7 +258,7 @@ def plot_anomalies(prediction):
         plt.fill_between(x=lt4.index, y1=lt4['climTP_lt4_Q25'], y2=lt4['climTP_lt4_Q75'], alpha=0.2)
 
         plt.axhline(0,ls='--')
-        plt.ylabel('30days discharge average [m^3/sec]')
+        plt.ylabel('30days averaged discharge anomaly [m^3/sec]')
 
         plt.legend(['TRUE DISCHARGE','LEAD TIME = 0','LEAD TIME = 1','LEAD TIME = 4'])    
         plt.title("Anomalies plotting with precipitation variability(Q= 25 and 75) mapped on the prediction discharge")
