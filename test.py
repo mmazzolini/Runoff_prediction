@@ -208,6 +208,8 @@ def plot_prediction(prediction):
         #plot the real
         sns.lineplot(y=("true_runoff"),x="date",data=pred,color='red',linewidth=1.3,legend='auto')
         sns.lineplot(y=("runoff_clim"),x="date",data=pred,color='yellow',linewidth=1.3,legend='auto')
+        sns.lineplot(y=("trueTP"),x="date",data=pred,color='green',linewidth=1.3,legend='auto')
+
 
         #plot the lead_time_
         lt1=pred[["climTP_lt1","climTP_lt1_Q25","climTP_lt1_Q75"]]
@@ -215,12 +217,13 @@ def plot_prediction(prediction):
         sns.lineplot(data=lt1["climTP_lt1"],legend='auto')
         plt.fill_between(x=lt1.index, y1=lt1['climTP_lt1_Q25'], y2=lt1['climTP_lt1_Q75'], alpha=0.2)
 
+        """
         #plot the lead_time_
         lt4=pred[["climTP_lt4","climTP_lt4_Q25","climTP_lt4_Q75"]]
         #lt4.columns=np.repeat('climatologia_lt4_ensemple_prec',3)
         sns.lineplot(data=lt4["climTP_lt4"], palette=['green'],legend='auto')
         plt.fill_between(x=lt4.index, y1=lt4['climTP_lt4_Q25'], y2=lt4['climTP_lt4_Q75'], alpha=0.2)
-
+        """
 
         plt.ylabel('30days discharge average [m^3/sec]')
 
