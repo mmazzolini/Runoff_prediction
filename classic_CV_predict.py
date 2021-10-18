@@ -21,12 +21,12 @@ from sf_runoff import  smape
 import pdb
 import seaborn as sns
 
-def classic_CV_SVR_predict(daily_input, C, eps, t_length, n_splits):#, radius_for_ensemble):
+def classic_CV_SVR_predict(daily_input, C, eps, t_length,t_unit, n_splits):#, radius_for_ensemble):
     
     #compute the daily climatology and the quantile analysis
-    daily_clim = daily_climatology_p_et_ensemble(daily_input,0)
+    daily_clim = daily_climatology_p_et_ensemble(daily_input,0,t_unit)
     #get the input-target matrix
-    it_matrix=create_it_matrix(daily_input,t_length)
+    it_matrix=create_it_matrix(daily_input,t_length,t_unit)
     #split in train-test sets
     tscv = KFold(n_splits=n_splits)
     sets = tscv.split(it_matrix.index)
@@ -37,7 +37,7 @@ def classic_CV_SVR_predict(daily_input, C, eps, t_length, n_splits):#, radius_fo
     for train_index, test_index in sets:
         
         #reduce train_set to have a gap with test index and ensure independence
-        train_index=create_gap(train_index, test_index,30)
+        train_index=create_gap(train_index, test_index,t_unit)
 
         #set up training features
         X = it_matrix.drop(columns='Q').iloc[train_index]
@@ -56,12 +56,12 @@ def classic_CV_SVR_predict(daily_input, C, eps, t_length, n_splits):#, radius_fo
         # and their day of the year
         doy_test_dates = test_dates.day_of_year
 
-        # Save the true runoff values (with 30 days rolling average)
+        # Save the true runoff values (with t_unit days rolling average)
         target = {}
-        target['true_runoff'] = daily_input.Q.rolling(30, min_periods=30).mean().loc[test_dates]
+        target['true_runoff'] = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean().loc[test_dates]
 
         # Compute runoff monthly climatology using the whole dataset
-        runoff_daily_clim = daily_input.Q.rolling(30, min_periods=30).mean()
+        runoff_daily_clim = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean()
         target['runoff_clim'] = [runoff_daily_clim.loc[runoff_daily_clim.index.day_of_year == d].mean() for d in doy_test_dates]
 
         X_trueTP = it_matrix.loc[test_dates, :].drop(columns='Q')
@@ -82,7 +82,7 @@ def classic_CV_SVR_predict(daily_input, C, eps, t_length, n_splits):#, radius_fo
             # modify the X matrix by substituting the climatology to the real meteo vars for lt months.
             change_dest = [c for c in X_climTP.columns if c.split('_')[1] == str(-lt + 1)]
             change_source = [c.split('_')[0] for c in change_dest]
-            X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source].values
+            X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source].values
             
             #predict
             target[f'climTP_lt{lt}'] = svr_model_tuned.predict(X_climTP)
@@ -95,10 +95,10 @@ def classic_CV_SVR_predict(daily_input, C, eps, t_length, n_splits):#, radius_fo
                     change_source_25.append(i+'_Q25')
                     change_source_75.append((i+'_Q75'))
 
-            X_climTP_Q25.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source_25].values
+            X_climTP_Q25.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source_25].values
             target[f'climTP_lt{lt}_Q25'] = svr_model_tuned.predict(X_climTP_Q25)
 
-            X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source_75].values
+            X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source_75].values
             target[f'climTP_lt{lt}_Q75'] = svr_model_tuned.predict(X_climTP_Q75)
         """
         
@@ -114,12 +114,12 @@ def classic_CV_SVR_predict(daily_input, C, eps, t_length, n_splits):#, radius_fo
 
 
 
-def classic_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, n_splits): #radius_for_ensemble):
+def classic_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length,t_unit ,n_splits): #radius_for_ensemble):
     
     #compute the daily climatology and the quantile analysis
-    daily_clim = daily_climatology_p_et_ensemble(daily_input,0)
+    daily_clim = daily_climatology_p_et_ensemble(daily_input,0,t_unit)
     #get the input-target matrix
-    it_matrix=create_it_matrix(daily_input,t_length)
+    it_matrix=create_it_matrix(daily_input,t_length,t_unit)
     #split in train-test sets
     tscv = KFold(n_splits=n_splits)
     sets = tscv.split(it_matrix.index)
@@ -130,7 +130,7 @@ def classic_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, n_splits): #rad
     for train_index, test_index in sets:
         
         #reduce train_set to have a gap with test index and ensure independence
-        train_index=create_gap(train_index, test_index,30)
+        train_index=create_gap(train_index, test_index,t_unit)
 
         #set up training features
         X = it_matrix.drop(columns='Q').iloc[train_index]
@@ -150,12 +150,12 @@ def classic_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, n_splits): #rad
         # and their day of the year
         doy_test_dates = test_dates.day_of_year
 
-        # Save the true runoff values (with 30 days rolling average)
+        # Save the true runoff values (with t_unit days rolling average)
         target = {}
-        target['true_runoff'] = daily_input.Q.rolling(30, min_periods=30).mean().loc[test_dates]
+        target['true_runoff'] = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean().loc[test_dates]
 
         # Compute runoff monthly climatology using the whole dataset
-        runoff_daily_clim = daily_input.Q.rolling(30, min_periods=30).mean()
+        runoff_daily_clim = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean()
         target['runoff_clim'] = [runoff_daily_clim.loc[runoff_daily_clim.index.day_of_year == d].mean() for d in doy_test_dates]
 
         X_trueTP = it_matrix.loc[test_dates, :].drop(columns='Q')
@@ -176,7 +176,7 @@ def classic_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, n_splits): #rad
             # modify the X matrix by substituting the climatology to the real meteo vars for lt months.
             change_dest = [c for c in X_climTP.columns if c.split('_')[1] == str(-lt + 1)]
             change_source = [c.split('_')[0] for c in change_dest]
-            X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source].values
+            X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source].values
             
             #predict
             target[f'climTP_lt{lt}'] = svr_model_tuned.predict(X_climTP)
@@ -189,10 +189,10 @@ def classic_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, n_splits): #rad
                     change_source_25.append(i+'_Q25')
                     change_source_75.append((i+'_Q75'))
 
-            X_climTP_Q25.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source_25].values
+            X_climTP_Q25.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source_25].values
             target[f'climTP_lt{lt}_Q25'] = svr_model_tuned.predict(X_climTP_Q25)
 
-            X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source_75].values
+            X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source_75].values
             target[f'climTP_lt{lt}_Q75'] = svr_model_tuned.predict(X_climTP_Q75)
         """
         target['split']= np.repeat(j,test_index.shape[0])

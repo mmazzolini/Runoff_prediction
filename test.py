@@ -19,14 +19,14 @@ from sf_runoff import  smape
 import pdb
 import seaborn as sns
 
-def nested_CV_SVR_predict(daily_input, C, eps, t_length, n_splits, test_size, radius_for_ensemble):
+def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_size, radius_for_ensemble):
     
     #compute the daily climatology and the quantile analysis
-    daily_clim = daily_climatology_p_et_ensemble(daily_input,radius_for_ensemble)
+    daily_clim = daily_climatology_p_et_ensemble(daily_input,t_unit,radius_for_ensemble)
     #get the input-target matrix
-    it_matrix=create_it_matrix(daily_input,t_length)
+    it_matrix=create_it_matrix(daily_input,t_length,t_unit)
     #split in train-test sets
-    tscv = TimeSeriesSplit(gap=30 ,n_splits=n_splits, test_size=test_size)
+    tscv = TimeSeriesSplit(gap=t_unit ,n_splits=n_splits, test_size=test_size)
     sets = tscv.split(it_matrix.index)
     j=0;
     prediction=pd.DataFrame(data=None)
@@ -49,12 +49,12 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, n_splits, test_size, ra
         # and their day of the year
         doy_test_dates = test_dates.day_of_year
 
-        # Save the true runoff values (with 30 days rolling average)
+        # Save the true runoff values (with t_unit days rolling average)
         target = {}
-        target['true_runoff'] = daily_input.Q.rolling(30, min_periods=30).mean().loc[test_dates]
+        target['true_runoff'] = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean().loc[test_dates]
 
         # Compute runoff monthly climatology using the whole dataset
-        runoff_daily_clim = daily_input.Q.rolling(30, min_periods=30).mean()
+        runoff_daily_clim = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean()
         target['runoff_clim'] = [runoff_daily_clim.loc[runoff_daily_clim.index.day_of_year == d].mean() for d in doy_test_dates]
 
         X_trueTP = it_matrix.loc[test_dates, :].drop(columns='Q')
@@ -75,7 +75,7 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, n_splits, test_size, ra
             # modify the X matrix by substituting the climatology to the real meteo vars for lt months.
             change_dest = [c for c in X_climTP.columns if c.split('_')[1] == str(-lt + 1)]
             change_source = [c.split('_')[0] for c in change_dest]
-            X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source].values
+            X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source].values
             
             #predict
             target[f'climTP_lt{lt}'] = svr_model_tuned.predict(X_climTP)
@@ -88,10 +88,10 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, n_splits, test_size, ra
                     change_source_25.append(i+'_Q25')
                     change_source_75.append((i+'_Q75'))
 
-            X_climTP_Q25.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source_25].values
+            X_climTP_Q25.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source_25].values
             target[f'climTP_lt{lt}_Q25'] = svr_model_tuned.predict(X_climTP_Q25)
 
-            X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source_75].values
+            X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source_75].values
             target[f'climTP_lt{lt}_Q75'] = svr_model_tuned.predict(X_climTP_Q75)
             #pdb.set_trace()
 
@@ -106,14 +106,14 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, n_splits, test_size, ra
 
 
 
-def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, n_splits, test_size, radius_for_ensemble):
+def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, t_unit,  n_splits, test_size, radius_for_ensemble):
     
     #compute the daily climatology and the quantile analysis
-    daily_clim = daily_climatology_p_et_ensemble(daily_input,radius_for_ensemble)
+    daily_clim = daily_climatology_p_et_ensemble(daily_input,t_unit,radius_for_ensemble)
     #get the input-target matrix
-    it_matrix=create_it_matrix(daily_input,t_length)
+    it_matrix=create_it_matrix(daily_input,t_length,t_unit)
     #split in train-test sets
-    tscv = TimeSeriesSplit(gap=30 ,n_splits=n_splits, test_size=test_size)
+    tscv = TimeSeriesSplit(gap=t_unit ,n_splits=n_splits, test_size=test_size)
     sets = tscv.split(it_matrix.index)
     j=0;
     prediction=pd.DataFrame(data=None)
@@ -137,12 +137,12 @@ def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, n_splits, test_s
         # and their day of the year
         doy_test_dates = test_dates.day_of_year
 
-        # Save the true runoff values (with 30 days rolling average)
+        # Save the true runoff values (with t_unit days rolling average)
         target = {}
-        target['true_runoff'] = daily_input.Q.rolling(30, min_periods=30).mean().loc[test_dates]
+        target['true_runoff'] = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean().loc[test_dates]
 
         # Compute runoff monthly climatology using the whole dataset
-        runoff_daily_clim = daily_input.Q.rolling(30, min_periods=30).mean()
+        runoff_daily_clim = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean()
         target['runoff_clim'] = [runoff_daily_clim.loc[runoff_daily_clim.index.day_of_year == d].mean() for d in doy_test_dates]
 
         X_trueTP = it_matrix.loc[test_dates, :].drop(columns='Q')
@@ -163,7 +163,7 @@ def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, n_splits, test_s
             # modify the X matrix by substituting the climatology to the real meteo vars for lt months.
             change_dest = [c for c in X_climTP.columns if c.split('_')[1] == str(-lt + 1)]
             change_source = [c.split('_')[0] for c in change_dest]
-            X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source].values
+            X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source].values
             
             #predict
             target[f'climTP_lt{lt}'] = svr_model_tuned.predict(X_climTP)
@@ -176,10 +176,10 @@ def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, n_splits, test_s
                     change_source_25.append(i+'_Q25')
                     change_source_75.append((i+'_Q75'))
 
-            X_climTP_Q25.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source_25].values
+            X_climTP_Q25.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source_25].values
             target[f'climTP_lt{lt}_Q25'] = svr_model_tuned.predict(X_climTP_Q25)
 
-            X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(30*(lt-1),'D')).day_of_year][change_source_75].values
+            X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source_75].values
             target[f'climTP_lt{lt}_Q75'] = svr_model_tuned.predict(X_climTP_Q75)
             
             #pdb.set_trace()
@@ -195,7 +195,7 @@ def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, n_splits, test_s
 
 
 
-def plot_prediction(prediction):
+def plot_prediction(prediction,t_unit):
 
     splits=prediction['split'].max()
     for i in range(splits+1):
@@ -225,15 +225,15 @@ def plot_prediction(prediction):
         plt.fill_between(x=lt4.index, y1=lt4['climTP_lt4_Q25'], y2=lt4['climTP_lt4_Q75'], alpha=0.2)
         """
 
-        plt.ylabel('30days discharge average [m^3/sec]')
+        plt.ylabel('{t_unit} days discharge average [m^3/sec]')
 
-        plt.legend(['TRUE DISCHARGE', 'DISCHARGE CLIMATOLOGY', 'LEAD TIME = 1','LEAD TIME = 4'])    
+        plt.legend(['TRUE DISCHARGE', 'DISCHARGE CLIMATOLOGY', 'LEAD TIME = 0', 'LEAD TIME = 1'])    
         plt.title("Precipitation variability(Q= 25 and 75) mapped on the prediction discharge")
     return;
 
 
 
-def plot_anomalies(prediction):
+def plot_anomalies(prediction, t_unit):
 
     splits=prediction['split'].max()
     for i in range(splits+1):
@@ -261,7 +261,7 @@ def plot_anomalies(prediction):
         plt.fill_between(x=lt4.index, y1=lt4['climTP_lt4_Q25'], y2=lt4['climTP_lt4_Q75'], alpha=0.2)
 
         plt.axhline(0,ls='--')
-        plt.ylabel('30days averaged discharge anomaly [m^3/sec]')
+        plt.ylabel('{t_unit} days averaged discharge anomaly [m^3/sec]')
 
         plt.legend(['TRUE DISCHARGE','LEAD TIME = 0','LEAD TIME = 1','LEAD TIME = 4'])    
         plt.title("Anomalies plotting with precipitation variability(Q= 25 and 75) mapped on the prediction discharge")

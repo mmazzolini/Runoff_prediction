@@ -18,11 +18,11 @@ import seaborn as sns
 
 
 
-def SVR_nested_CV_gridsearch(daily_input, C_range,epsilon_range, t_range,n_splits,test_size):
+def SVR_nested_CV_gridsearch(daily_input, C_range,epsilon_range, t_range,t_unit,n_splits,test_size):
                          
     for t_length in t_range:
-        it_matrix=create_it_matrix(daily_input,t_length)
-        tscv = TimeSeriesSplit(gap=30 ,n_splits=n_splits, test_size=test_size)
+        it_matrix=create_it_matrix(daily_input,t_length,t_unit)
+        tscv = TimeSeriesSplit(gap=t_unit ,n_splits=n_splits, test_size=test_size)
         sets = tscv.split(it_matrix.index)
         
         all_models= []
@@ -100,11 +100,11 @@ def SVR_nested_CV_gridsearch(daily_input, C_range,epsilon_range, t_range,n_split
     return best_C, best_epsilon
 
 
-def SVR_PCA_nested_CV_gridsearch(daily_input, C_range, epsilon_range, components_range, t_range,n_splits,test_size):
+def SVR_PCA_nested_CV_gridsearch(daily_input, C_range, epsilon_range, components_range, t_range,t_unit,n_splits,test_size):
                          
     for t_length in t_range:
-        it_matrix=create_it_matrix(daily_input,t_length)
-        tscv = TimeSeriesSplit(gap=30 ,n_splits=n_splits, test_size=test_size)
+        it_matrix=create_it_matrix(daily_input,t_length,t_unit)
+        tscv = TimeSeriesSplit(gap=t_unit ,n_splits=n_splits, test_size=test_size)
         sets = tscv.split(it_matrix.index)
         
         all_models= []
@@ -184,12 +184,3 @@ def SVR_PCA_nested_CV_gridsearch(daily_input, C_range, epsilon_range, components
         print()
         
     return best_C, best_epsilon, best_n
-        
-                         
-                         
-                         
-                           
-               
-                        
-                         
-                         

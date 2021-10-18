@@ -16,13 +16,13 @@ import os
 
 import pdb
 
-def shift_series_30days(s, shift_range):
+def shift_series_(s, shift_range,t_unit):
 
-    s_shifts = [s.shift(-30 * shift, freq='D').rename(f'{s.name}_{shift}') for shift in range(*shift_range)]
+    s_shifts = [s.shift(-t_unit * shift, freq='D').rename(f'{s.name}_{shift}') for shift in range(*shift_range)]
     return pd.concat(s_shifts, axis=1)
 
 
-def create_it_matrix(daily_input, t_length):
+def create_it_matrix(daily_input, t_length,t_unit):
 
     # This function takes as input the daily temperature, precipitation and runoff and generates the input-target matrix
 
@@ -35,33 +35,33 @@ def create_it_matrix(daily_input, t_length):
     evap = daily_input[[c for c in daily_input.columns if c[0] == 'E']]
 
 
-    # Compute the 30 days average runoff
-    runoff_30 = runoff.rolling(30, min_periods=30).mean()
+    # Compute the t_unit days average runoff
+    runoff_t_unit = runoff.rolling(t_unit, min_periods=t_unit).mean()
 
     
-    # Compute the 30 days average temperature
+    # Compute the t_unit days average temperature
     if not temp.empty:
-        temp_30 = temp.rolling(30, min_periods=30).mean()
-        temp_30 = pd.concat([shift_series_30days(temp_30.loc[:, col], (-t_length + 1, 1)) for col in temp_30], axis=1)
+        temp_t_unit = temp.rolling(t_unit, min_periods=t_unit).mean()
+        temp_t_unit = pd.concat([shift_series_(temp_t_unit.loc[:, col], (-t_length + 1, 1),t_unit) for col in temp_t_unit], axis=1)
 
-    # Compute the 30 days sum precipitation
+    # Compute the t_unit days sum precipitation
     if not prec.empty:
-        prec_30 = prec.rolling(30, min_periods=30).sum()
-        prec_30 = pd.concat([shift_series_30days(prec_30.loc[:, col], (-t_length + 1, 1)) for col in prec_30], axis=1)
+        prec_t_unit = prec.rolling(t_unit, min_periods=t_unit).sum()
+        prec_t_unit = pd.concat([shift_series_(prec_t_unit.loc[:, col], (-t_length + 1, 1),t_unit) for col in prec_t_unit], axis=1)
     
-    # Compute the 30 days sum evapotranspiration
+    # Compute the t_unit days sum evapotranspiration
     if not evap.empty:
-        evap_30 = evap.rolling(30, min_periods=30).sum()
-        evap_30 = pd.concat([shift_series_30days(evap_30.loc[:, col], (-t_length + 1, 1)) for col in evap_30], axis=1)
+        evap_t_unit = evap.rolling(t_unit, min_periods=t_unit).sum()
+        evap_t_unit = pd.concat([shift_series_(evap_t_unit.loc[:, col], (-t_length + 1, 1),t_unit) for col in evap_t_unit], axis=1)
 
 
     # Create the input-target matrix
-    return pd.concat([runoff_30, temp_30, prec_30, evap_30], axis=1).dropna()
+    return pd.concat([runoff_t_unit, temp_t_unit, prec_t_unit, evap_t_unit], axis=1).dropna()
 
 
 
 
-
+"""
 def sf_input_matrix(input_matrix, seasonal_forecast, lead_time, member):
 
     X = input_matrix.copy()
@@ -74,9 +74,10 @@ def sf_input_matrix(input_matrix, seasonal_forecast, lead_time, member):
         X.loc[:, X_columns] = seasonal_forecast.loc[sf_dates, sf_columns].values
 
     return X
+"""
 
 
-def svr_gridSearch(daily_input, t_length, C_range=np.logspace(-3, 1, 5), epsilon_range=np.logspace(-5, 0, 5),
+def svr_gridSearch(daily_input, t_length,t_unit, C_range=np.logspace(-3, 1, 5), epsilon_range=np.logspace(-5, 0, 5),
                    plot=False, n_splits=8):
 
     # svr_gridSearch run the grid search on C and epsilon svr parameters.
@@ -88,7 +89,7 @@ def svr_gridSearch(daily_input, t_length, C_range=np.logspace(-3, 1, 5), epsilon
     
     # Set up the splits respecting of the time-series nature of the dataset
 
-    tscv = TimeSeriesSplit(gap=30,n_splits=n_splits, test_size=365)
+    tscv = TimeSeriesSplit(gap=t_unit,n_splits=n_splits, test_size=365)
     tscv.split(X)
     
     #pdb.set_trace()
@@ -212,7 +213,7 @@ def training(daily_input, t_length=None, svr_C=None, svr_epsilon=None):
     return svr_model
 
 
-def monthly_climatology(daily_input):
+def monthly_climatology(daily_input,t_unit):
 
     if isinstance(daily_input, str):
         daily_input = pd.read_csv(daily_input, index_col=0, parse_dates=True)
@@ -221,11 +222,11 @@ def monthly_climatology(daily_input):
     monthly_mean = daily_input.loc[:, monthly_mean_columns].groupby(by=daily_input.index.month).mean()
     #remember to add ['E', 'P']
     monthly_sum_columns = [c for c in daily_input.columns if c[0] in ['P','E']]
-    monthly_sum = daily_input.loc[:, monthly_sum_columns].groupby(by=daily_input.index.month).mean() * 30
+    monthly_sum = daily_input.loc[:, monthly_sum_columns].groupby(by=daily_input.index.month).mean() * t_unit
     #pdb.set_trace()
     return pd.concat([monthly_mean, monthly_sum], axis=1)#[monthly_mean_columns,monthly_sum_columns]
 
-def daily_climatology(daily_input):
+def daily_climatology(daily_input,t_unit):
     
     runoff = daily_input[['Q']]
     temp = daily_input[[c for c in daily_input.columns if c[0] == 'T']]
@@ -233,27 +234,27 @@ def daily_climatology(daily_input):
     evap = daily_input[[c for c in daily_input.columns if c[0] == 'E']]
 
 
-    # Compute the 30 days average runoff
-    runoff_30 = runoff.rolling(30, min_periods=30).mean()
+    # Compute the t_unit days average runoff
+    runoff_t_unit = runoff.rolling(t_unit, min_periods=t_unit).mean()
 
     
-    # Compute the 30 days average temperature
+    # Compute the t_unit days average temperature
     if not temp.empty:
-        temp_30 = temp.rolling(30, min_periods=30).mean()
-        #temp_30 = pd.concat([shift_series_30days(temp_30.loc[:, col], (-t_length + 1, 1)) for col in temp_30], axis=1)
+        temp_t_unit = temp.rolling(t_unit, min_periods=t_unit).mean()
+        #temp_t_unit = pd.concat([shift_series_t_unitdays(temp_t_unit.loc[:, col], (-t_length + 1, 1)) for col in temp_t_unit], axis=1)
 
-    # Compute the 30 days sum precipitation
+    # Compute the t_unit days sum precipitation
     if not prec.empty:
-        prec_30 = prec.rolling(30, min_periods=30).sum()
-        #prec_30 = pd.concat([shift_series_30days(prec_30.loc[:, col], (-t_length + 1, 1)) for col in prec_30], axis=1)
+        prec_t_unit = prec.rolling(t_unit, min_periods=t_unit).sum()
+        #prec_t_unit = pd.concat([shift_series_t_unitdays(prec_t_unit.loc[:, col], (-t_length + 1, 1)) for col in prec_t_unit], axis=1)
     
-    # Compute the 30 days sum evapotranspiration
+    # Compute the t_unit days sum evapotranspiration
     if not evap.empty:
-        evap_30 = evap.rolling(30, min_periods=30).sum()
-        #evap_30 = pd.concat([shift_series_30days(evap_30.loc[:, col], (-t_length + 1, 1)) for col in evap_30], axis=1)
+        evap_t_unit = evap.rolling(t_unit, min_periods=t_unit).sum()
+        #evap_t_unit = pd.concat([shift_series_t_unitdays(evap_t_unit.loc[:, col], (-t_length + 1, 1)) for col in evap_t_unit], axis=1)
 
-    daily_30 = pd.concat([runoff_30, temp_30, prec_30, evap_30], axis=1)
-    daily_mean = daily_30.groupby(by=daily_30.index.day_of_year).mean()
+    daily_t_unit = pd.concat([runoff_t_unit, temp_t_unit, prec_t_unit, evap_t_unit], axis=1)
+    daily_mean = daily_t_unit.groupby(by=daily_t_unit.index.day_of_year).mean()
 
     #pdb.set_trace()
     return daily_mean
@@ -399,47 +400,6 @@ def root_mean_squared_error(y_true, y_pred):
 
 def smape(A, F):
     return 100/len(A) * np.sum(2 * np.abs(F - A) / (np.abs(A) + np.abs(F)))
-
-
-def learning_curve_rmse(result_folder, forecast='sfTP_em', plot=True):
-
-    # forecast = 'sfTP_mX': plot the member X of seasonal forecast
-    # forecast = 'sfTP_em': plot the ensamble mean of seasonal forecast
-    # forecast = 'climTP': plot the forecast using the climatology of temperature and precipitation
-
-    # result_folder = '/home/mcallegari@eurac.edu/SECLI-FIRM/Mattia/SF_runoff/Zoccolo/Results/Learning_curve/'
-
-    runoff_error = []
-    for year in range(1, 27):
-
-        # Open the result file
-        fileName = os.path.join(result_folder, f'Runoff_forecast_{year}_trainingyears.csv')
-        runoff = pd.read_csv(fileName, index_col=0, parse_dates=True)
-
-        # Create the ensamble mean
-        for lt in range(1, 8):
-            columns = [c for c in runoff.columns if 'sfTP_m' in c and f'lt{lt}' in c]
-            runoff[f'sfTP_em_lt{lt}'] = runoff.loc[:, columns].mean(axis=1)
-
-        # Compute the RMSE
-        runoff_error.append(
-            runoff.apply(lambda y_pred: root_mean_squared_error(runoff['true_runoff'], y_pred), axis=0)
-        )
-
-    runoff_error = pd.DataFrame(data=runoff_error, index=range(1, 27))
-
-    if plot:
-        plt.figure()
-        for lt in range(1, 7):
-            runoff_error.loc[:, f'{forecast}_lt{lt}'].plot(label=f'leadtime={lt}')
-        runoff_error.loc[:, 'runoff_clim'].plot(color='black', label='climatology', linewidth=3)
-        runoff_error.loc[:, 'trueTP'].plot(color='red', label='era5', linewidth=3)
-        plt.legend()
-        plt.ylabel('RMSE ($m^3/s$)')
-        plt.xlabel('Years of training')
-
-    else:
-        return runoff_error
 
 
 def monthly_rmse(fileName, plot=True):

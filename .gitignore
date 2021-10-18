@@ -2,3 +2,5 @@
 .pyc
 *.pyc
 *.pyc
+*.pyc
+__pycache__/test.cpython-39.pyc
