@@ -122,11 +122,15 @@ def daily_climatology_p_et_ensemble(daily_input,t_unit,radius=2/3):
     evap_q25=evap_q25.add_suffix('_Q25')
 
     #pdb.set_trace()
-    
-    # Create the input-target matrix
-    return pd.concat([daily,
+    daily_clim=pd.concat([daily,
                      temp_q75, prec_q75, evap_q75,
                      temp_q25, prec_q25, evap_q25,], axis=1).dropna()
+
+
+    if daily_clim.index.max() == 365:
+        daily_clim.loc[366]=daily_clim.loc[365]    
+
+    return daily_clim
 
 
 

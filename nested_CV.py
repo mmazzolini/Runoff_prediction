@@ -21,7 +21,7 @@ import seaborn as sns
 def SVR_nested_CV_gridsearch(daily_input, C_range,epsilon_range, t_range,t_unit,n_splits,test_size):
                          
     for t_length in t_range:
-        it_matrix=create_it_matrix(daily_input,t_length,t_unit)
+        it_matrix=create_it_matrix(daily_input,t_length,t_unit).astype('float32')
         tscv = TimeSeriesSplit(gap=t_unit ,n_splits=n_splits, test_size=test_size)
         sets = tscv.split(it_matrix.index)
         
@@ -103,7 +103,7 @@ def SVR_nested_CV_gridsearch(daily_input, C_range,epsilon_range, t_range,t_unit,
 def SVR_PCA_nested_CV_gridsearch(daily_input, C_range, epsilon_range, components_range, t_range,t_unit,n_splits,test_size):
                          
     for t_length in t_range:
-        it_matrix=create_it_matrix(daily_input,t_length,t_unit)
+        it_matrix=create_it_matrix(daily_input,t_length,t_unit).astype('float32')
         tscv = TimeSeriesSplit(gap=t_unit ,n_splits=n_splits, test_size=test_size)
         sets = tscv.split(it_matrix.index)
         
