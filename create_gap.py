@@ -15,3 +15,5 @@ def create_gap(train_index,test_index,gap):
         pos = np.where(train_index+1 == test_index[0])[0][0]
         train_index=np.concatenate((train_index[:pos-gap],train_index[pos+gap:]),axis=0)
     return train_index
+    
+    

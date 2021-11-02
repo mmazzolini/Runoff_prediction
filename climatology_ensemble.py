@@ -40,7 +40,7 @@ def daily_climatology_p_et_ensemble(daily_input,t_unit,radius=2/3):
 
 
     # Compute the t_unit days average runoff
-    runoff_t_unit = runoff.rolling(t_unit, min_periods=t_unit).mean()
+    runoff_t_unit = runoff.rolling(30, min_periods=30).mean()
 
     
     # Compute the t_unit days average temperature
@@ -143,7 +143,7 @@ def daily_climatology_p_ensemble(daily_input, t_unit):
     evap = daily_input[[c for c in daily_input.columns if c[0] == 'E']]
 
     # Compute the t_unit days average runoff
-    runoff_t_unit = runoff.rolling(t_unit, min_periods=t_unit).mean()
+    runoff_t_unit = runoff.rolling(30, min_periods=30).mean()
    
     # Compute the t_unit days average temperature
     if not temp.empty:

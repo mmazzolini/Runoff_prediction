@@ -51,10 +51,10 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_
 
         # Save the true runoff values (with t_unit days rolling average)
         target = {}
-        target['true_runoff'] = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean().loc[test_dates]
+        target['true_runoff'] = daily_input.Q.rolling(30, min_periods=30).mean().loc[test_dates]
 
         # Compute runoff monthly climatology using the whole dataset
-        runoff_daily_clim = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean()
+        runoff_daily_clim = daily_input.Q.rolling(30, min_periods=30).mean()
         target['runoff_clim'] = [runoff_daily_clim.loc[runoff_daily_clim.index.day_of_year == d].mean() for d in doy_test_dates]
 
         X_trueTP = it_matrix.loc[test_dates, :].drop(columns='Q')
@@ -139,10 +139,10 @@ def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, t_unit,  n_split
 
         # Save the true runoff values (with t_unit days rolling average)
         target = {}
-        target['true_runoff'] = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean().loc[test_dates]
+        target['true_runoff'] = daily_input.Q.rolling(30, min_periods=30).mean().loc[test_dates]
 
         # Compute runoff monthly climatology using the whole dataset
-        runoff_daily_clim = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean()
+        runoff_daily_clim = daily_input.Q.rolling(30, min_periods=30).mean()
         target['runoff_clim'] = [runoff_daily_clim.loc[runoff_daily_clim.index.day_of_year == d].mean() for d in doy_test_dates]
 
         X_trueTP = it_matrix.loc[test_dates, :].drop(columns='Q')
@@ -195,7 +195,7 @@ def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, t_unit,  n_split
 
 
 
-def plot_prediction(prediction,t_unit):
+def plot_prediction(prediction):
 
     splits=prediction['split'].max()
     for i in range(splits+1):
@@ -225,7 +225,7 @@ def plot_prediction(prediction,t_unit):
         plt.fill_between(x=lt4.index, y1=lt4['climTP_lt4_Q25'], y2=lt4['climTP_lt4_Q75'], alpha=0.2)
         """
 
-        plt.ylabel('{t_unit} days discharge average [m^3/sec]')
+        plt.ylabel('30 days discharge average [m^3/sec]')
 
         plt.legend(['TRUE DISCHARGE', 'DISCHARGE CLIMATOLOGY', 'LEAD TIME = 0', 'LEAD TIME = 1'])    
         plt.title("Precipitation variability(Q= 25 and 75) mapped on the prediction discharge")
@@ -233,7 +233,7 @@ def plot_prediction(prediction,t_unit):
 
 
 
-def plot_anomalies(prediction, t_unit):
+def plot_anomalies(prediction):
 
     splits=prediction['split'].max()
     for i in range(splits+1):
@@ -261,7 +261,7 @@ def plot_anomalies(prediction, t_unit):
         plt.fill_between(x=lt4.index, y1=lt4['climTP_lt4_Q25'], y2=lt4['climTP_lt4_Q75'], alpha=0.2)
 
         plt.axhline(0,ls='--')
-        plt.ylabel('{t_unit} days averaged discharge anomaly [m^3/sec]')
+        plt.ylabel('30 days averaged discharge anomaly [m^3/sec]')
 
         plt.legend(['TRUE DISCHARGE','LEAD TIME = 0','LEAD TIME = 1','LEAD TIME = 4'])    
         plt.title("Anomalies plotting with precipitation variability(Q= 25 and 75) mapped on the prediction discharge")

@@ -58,10 +58,10 @@ def classic_CV_SVR_predict(daily_input, C, eps, t_length,t_unit, n_splits):#, ra
 
         # Save the true runoff values (with t_unit days rolling average)
         target = {}
-        target['true_runoff'] = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean().loc[test_dates]
+        target['true_runoff'] = daily_input.Q.rolling(30, min_periods=30).mean().loc[test_dates]
 
         # Compute runoff monthly climatology using the whole dataset
-        runoff_daily_clim = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean()
+        runoff_daily_clim = daily_input.Q.rolling(30, min_periods=30).mean()
         target['runoff_clim'] = [runoff_daily_clim.loc[runoff_daily_clim.index.day_of_year == d].mean() for d in doy_test_dates]
 
         X_trueTP = it_matrix.loc[test_dates, :].drop(columns='Q')
@@ -152,10 +152,10 @@ def classic_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length,t_unit ,n_splits
 
         # Save the true runoff values (with t_unit days rolling average)
         target = {}
-        target['true_runoff'] = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean().loc[test_dates]
+        target['true_runoff'] = daily_input.Q.rolling(30, min_periods=30).mean().loc[test_dates]
 
         # Compute runoff monthly climatology using the whole dataset
-        runoff_daily_clim = daily_input.Q.rolling(t_unit, min_periods=t_unit).mean()
+        runoff_daily_clim = daily_input.Q.rolling(30, min_periods=30).mean()
         target['runoff_clim'] = [runoff_daily_clim.loc[runoff_daily_clim.index.day_of_year == d].mean() for d in doy_test_dates]
 
         X_trueTP = it_matrix.loc[test_dates, :].drop(columns='Q')

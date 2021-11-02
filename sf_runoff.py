@@ -36,9 +36,9 @@ def create_it_matrix(daily_input, t_length,t_unit):
 
 
     # Compute the t_unit days average runoff
-    runoff_t_unit = runoff.rolling(t_unit, min_periods=t_unit).mean()
+    runoff_t_unit = runoff.rolling(30, min_periods=30).mean()
 
-    
+
     # Compute the t_unit days average temperature
     if not temp.empty:
         temp_t_unit = temp.rolling(t_unit, min_periods=t_unit).mean()
@@ -48,7 +48,7 @@ def create_it_matrix(daily_input, t_length,t_unit):
     if not prec.empty:
         prec_t_unit = prec.rolling(t_unit, min_periods=t_unit).sum()
         prec_t_unit = pd.concat([shift_series_(prec_t_unit.loc[:, col], (-t_length + 1, 1),t_unit) for col in prec_t_unit], axis=1)
-    
+
     # Compute the t_unit days sum evapotranspiration
     if not evap.empty:
         evap_t_unit = evap.rolling(t_unit, min_periods=t_unit).sum()
@@ -76,7 +76,7 @@ def sf_input_matrix(input_matrix, seasonal_forecast, lead_time, member):
     return X
 """
 
-
+"""
 def svr_gridSearch(daily_input, t_length,t_unit, C_range=np.logspace(-3, 1, 5), epsilon_range=np.logspace(-5, 0, 5),
                    plot=False, n_splits=8):
 
@@ -170,15 +170,7 @@ def feature_sel(daily_input):
 
     return pd.DataFrame(data=gridSearch_results, index=range(1, 12))
 
-    # if isinstance(daily_input, str):
-    #     daily_input = pd.read_csv('/home/mcallegari@eurac.edu/SECLI-FIRM/Mattia/SF_runoff/Zoccolo/inputs/daily_input.csv', index_col=0, parse_dates=True)
-    #
-    # temp_col = [c for c in daily_input.columns if c[0] == 'T']
-    # prec_col = [c for c in daily_input.columns if c[0] == 'P']
-    #
-    # for feat in itertools.product(temp_col, prec_col):
-    #     for t_len in range(1, 12):
-    #         svr_gridSearch(daily_input.loc[:, ('Q',) + feat], t_len, plot=False)
+
 
 
 def training(daily_input, t_length=None, svr_C=None, svr_epsilon=None):
@@ -211,8 +203,9 @@ def training(daily_input, t_length=None, svr_C=None, svr_epsilon=None):
         svr_model.fit(X, y)
 
     return svr_model
+"""
 
-
+"""
 def monthly_climatology(daily_input,t_unit):
 
     if isinstance(daily_input, str):
@@ -222,9 +215,11 @@ def monthly_climatology(daily_input,t_unit):
     monthly_mean = daily_input.loc[:, monthly_mean_columns].groupby(by=daily_input.index.month).mean()
     #remember to add ['E', 'P']
     monthly_sum_columns = [c for c in daily_input.columns if c[0] in ['P','E']]
-    monthly_sum = daily_input.loc[:, monthly_sum_columns].groupby(by=daily_input.index.month).mean() * t_unit
+    monthly_sum = daily_input.loc[:, monthly_sum_columns].groupby(by=daily_input.index.month).sum()
     #pdb.set_trace()
     return pd.concat([monthly_mean, monthly_sum], axis=1)#[monthly_mean_columns,monthly_sum_columns]
+"""
+
 
 def daily_climatology(daily_input,t_unit):
     
@@ -235,7 +230,7 @@ def daily_climatology(daily_input,t_unit):
 
 
     # Compute the t_unit days average runoff
-    runoff_t_unit = runoff.rolling(t_unit, min_periods=t_unit).mean()
+    runoff_t_unit = runoff.rolling(30, min_periods=30).mean()
 
     
     # Compute the t_unit days average temperature
@@ -261,7 +256,7 @@ def daily_climatology(daily_input,t_unit):
 
 
 
-
+"""
 def loyo_cv_lc_nofor(daily_input,output_folder, t_length=None, svr_C=None, svr_epsilon=None,
                lead_time=range(1, 8)):
 
@@ -388,7 +383,7 @@ def loyo_cv_lc(daily_input, seasonal_forecast, output_folder, t_length=None, svr
 
         pd.concat(prediction, axis=0).to_csv(
             os.path.join(output_folder, f'Runoff_forecast_{Nyears_training}_trainingyears.csv'))
-
+"""
 
 # -----------------------------------------------------------------------
 
