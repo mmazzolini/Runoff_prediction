@@ -72,9 +72,11 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_
         lead_times = range(1,6)
         for lt in lead_times:
             
+            
             # modify the X matrix by substituting the climatology to the real meteo vars for lt months.
             change_dest = [c for c in X_climTP.columns if c.split('_')[1] == str(-lt + 1)]
             change_source = [c.split('_')[0] for c in change_dest]
+            #pdb.set_trace()
             X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source].values
             
             #predict
@@ -124,7 +126,7 @@ def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, t_unit,  n_split
         y = it_matrix['Q'].iloc[train_index]
         
         #set up the model according to the parameters
-        svr_model_tuned = SVR(kernel='rbf', gamma='scale', C=C, epsilon=eps, cache_size=1000)
+        svr_model_tuned = SVR(kernel='rbf', gamma='gamma', C=C, epsilon=eps, cache_size=1000)
         svr_model_tuned = make_pipeline(StandardScaler(),
                                         PCA(n_components=n),
                                       TransformedTargetRegressor(regressor=svr_model_tuned, transformer=StandardScaler()))
@@ -156,13 +158,14 @@ def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, t_unit,  n_split
         X_climTP_Q25=X_trueTP.copy()
         X_climTP_Q75=X_trueTP.copy()
 
-        #predict till 6 months of advance
+        #predict till 6 periods of advance
         lead_times = range(1,6)
         for lt in lead_times:
             
             # modify the X matrix by substituting the climatology to the real meteo vars for lt months.
             change_dest = [c for c in X_climTP.columns if c.split('_')[1] == str(-lt + 1)]
             change_source = [c.split('_')[0] for c in change_dest]
+            #pdb.set_trace()
             X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source].values
             
             #predict

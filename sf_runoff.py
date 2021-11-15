@@ -33,30 +33,50 @@ def create_it_matrix(daily_input, t_length,t_unit):
     temp = daily_input[[c for c in daily_input.columns if c[0] == 'T']]
     prec = daily_input[[c for c in daily_input.columns if c[0] == 'P']]
     evap = daily_input[[c for c in daily_input.columns if c[0] == 'E']]
+    snow = daily_input[[c for c in daily_input.columns if c[0] == 'S']]
+    run = daily_input[[c for c in daily_input.columns if c[0] == 'R']]
 
 
+    output = []
     # Compute the t_unit days average runoff
     runoff_t_unit = runoff.rolling(30, min_periods=30).mean()
-
-
+    output.append(runoff_t_unit)
+    
+    
     # Compute the t_unit days average temperature
     if not temp.empty:
         temp_t_unit = temp.rolling(t_unit, min_periods=t_unit).mean()
         temp_t_unit = pd.concat([shift_series_(temp_t_unit.loc[:, col], (-t_length + 1, 1),t_unit) for col in temp_t_unit], axis=1)
+        output.append(temp_t_unit)
+
+    # Compute the t_unit days average snow water equivalent
+    if not snow.empty:
+        snow_t_unit = snow.rolling(t_unit, min_periods=t_unit).mean()
+        snow_t_unit = pd.concat([shift_series_(snow_t_unit.loc[:, col], (-t_length + 1, 1),t_unit) for col in snow_t_unit], axis=1)
+        output.append(snow_t_unit)
+    
+
+    # Compute the t_unit days sum precipitation
+    if not run.empty:
+        run_t_unit = run.rolling(t_unit, min_periods=t_unit).sum()
+        run_t_unit = pd.concat([shift_series_(run_t_unit.loc[:, col], (-t_length + 1, 1),t_unit) for col in run_t_unit], axis=1)
+        output.append(run_t_unit)
+
 
     # Compute the t_unit days sum precipitation
     if not prec.empty:
         prec_t_unit = prec.rolling(t_unit, min_periods=t_unit).sum()
         prec_t_unit = pd.concat([shift_series_(prec_t_unit.loc[:, col], (-t_length + 1, 1),t_unit) for col in prec_t_unit], axis=1)
-
+        output.append(prec_t_unit)
+        
     # Compute the t_unit days sum evapotranspiration
     if not evap.empty:
         evap_t_unit = evap.rolling(t_unit, min_periods=t_unit).sum()
         evap_t_unit = pd.concat([shift_series_(evap_t_unit.loc[:, col], (-t_length + 1, 1),t_unit) for col in evap_t_unit], axis=1)
-
-
+        output.append(evap_t_unit)
+    
     # Create the input-target matrix
-    return pd.concat([runoff_t_unit, temp_t_unit, prec_t_unit, evap_t_unit], axis=1).dropna()
+    return pd.concat(output, axis=1).dropna()
 
 
 
@@ -227,6 +247,7 @@ def daily_climatology(daily_input,t_unit):
     temp = daily_input[[c for c in daily_input.columns if c[0] == 'T']]
     prec = daily_input[[c for c in daily_input.columns if c[0] == 'P']]
     evap = daily_input[[c for c in daily_input.columns if c[0] == 'E']]
+    snow = daily_input[[c for c in daily_input.columns if c[0] == 'S']]
 
 
     # Compute the t_unit days average runoff
@@ -238,6 +259,13 @@ def daily_climatology(daily_input,t_unit):
         temp_t_unit = temp.rolling(t_unit, min_periods=t_unit).mean()
         #temp_t_unit = pd.concat([shift_series_t_unitdays(temp_t_unit.loc[:, col], (-t_length + 1, 1)) for col in temp_t_unit], axis=1)
 
+
+    # Compute the t_unit days average snow water equivalent
+    if not snow.empty:
+        snow_t_unit = snow.rolling(t_unit, min_periods=t_unit).mean()
+        #temp_t_unit = pd.concat([shift_series_t_unitdays(temp_t_unit.loc[:, col], (-t_length + 1, 1)) for col in temp_t_unit], axis=1)
+
+
     # Compute the t_unit days sum precipitation
     if not prec.empty:
         prec_t_unit = prec.rolling(t_unit, min_periods=t_unit).sum()
@@ -247,8 +275,9 @@ def daily_climatology(daily_input,t_unit):
     if not evap.empty:
         evap_t_unit = evap.rolling(t_unit, min_periods=t_unit).sum()
         #evap_t_unit = pd.concat([shift_series_t_unitdays(evap_t_unit.loc[:, col], (-t_length + 1, 1)) for col in evap_t_unit], axis=1)
+        
 
-    daily_t_unit = pd.concat([runoff_t_unit, temp_t_unit, prec_t_unit, evap_t_unit], axis=1)
+    daily_t_unit = pd.concat([runoff_t_unit, temp_t_unit, prec_t_unit, evap_t_unit, snow_t_unit], axis=1)
     daily_mean = daily_t_unit.groupby(by=daily_t_unit.index.day_of_year).mean()
 
     #pdb.set_trace()
@@ -504,6 +533,14 @@ def spatial_avg_daily_input(daily_input):
     daily_input['P'] = daily_input[p_columns].mean(axis=1)
     daily_input=daily_input.drop(columns = p_columns)
     
+    s_columns = [c for c in daily_input.columns if c[0] =='S']
+    daily_input['S'] = daily_input[s_columns].mean(axis=1)
+    daily_input=daily_input.drop(columns = s_columns)
+    
+    r_columns = [c for c in daily_input.columns if c[0] =='R']
+    daily_input['R'] = daily_input[r_columns].mean(axis=1)
+    daily_input=daily_input.drop(columns = r_columns)
+    
     return daily_input;
 
 
@@ -513,27 +550,43 @@ def spatial_stats_daily_input(daily_input):
     
     t_columns = [c for c in daily_input.columns if c[0] =='T']
     t_vars=daily_input[t_columns]
-    new_daily_input.loc[:,'T'] = t_vars.mean(axis=1)
-    new_daily_input.loc[:,'T5']=t_vars.quantile(q=0.05,axis=1)
+    new_daily_input.loc[:,'T']  = t_vars.mean(axis=1)
+    new_daily_input.loc[:,'T5'] =t_vars.quantile(q=0.05,axis=1)
     new_daily_input.loc[:,'T25']=t_vars.quantile(q=0.25,axis=1)
     new_daily_input.loc[:,'T75']=t_vars.quantile(q=0.75,axis=1)
     new_daily_input.insert(loc=5,column='T95',value=t_vars.quantile(q=0.95,axis=1))
     
     e_columns = [c for c in daily_input.columns if c[0] =='E']
     e_vars=daily_input[e_columns]
-    new_daily_input.loc[:,'E'] = e_vars.mean(axis=1)
-    new_daily_input.loc[:,'E5']=e_vars.quantile(q=0.05,axis=1)
+    new_daily_input.loc[:,'E']  = e_vars.mean(axis=1)
+    new_daily_input.loc[:,'E5'] =e_vars.quantile(q=0.05,axis=1)
     new_daily_input.loc[:,'E25']=e_vars.quantile(q=0.25,axis=1)
     new_daily_input.loc[:,'E75']=e_vars.quantile(q=0.75,axis=1)
     new_daily_input.loc[:,'E95']=e_vars.quantile(q=0.95,axis=1)
     
     p_columns = [c for c in daily_input.columns if c[0] =='P']
     p_vars=daily_input[p_columns]
-    new_daily_input.loc[:,'P'] = p_vars.mean(axis=1)
-    new_daily_input.loc[:,'P5']=p_vars.quantile(q=0.05,axis=1)
+    new_daily_input.loc[:,'P']  = p_vars.mean(axis=1)
+    new_daily_input.loc[:,'P5'] =p_vars.quantile(q=0.05,axis=1)
     new_daily_input.loc[:,'P25']=p_vars.quantile(q=0.25,axis=1)
     new_daily_input.loc[:,'P75']=p_vars.quantile(q=0.75,axis=1)
     new_daily_input.loc[:,'P95']=p_vars.quantile(q=0.95,axis=1)
+    
+    s_columns = [c for c in daily_input.columns if c[0] =='S']
+    s_vars=daily_input[s_columns]
+    new_daily_input.loc[:,'S']  = s_vars.mean(axis=1)
+    new_daily_input.loc[:,'S5'] =s_vars.quantile(q=0.05,axis=1)
+    new_daily_input.loc[:,'S25']=s_vars.quantile(q=0.25,axis=1)
+    new_daily_input.loc[:,'S75']=s_vars.quantile(q=0.75,axis=1)
+    new_daily_input.loc[:,'S95']=s_vars.quantile(q=0.95,axis=1)
+    
+    r_columns = [c for c in daily_input.columns if c[0] =='R']
+    r_vars=daily_input[r_columns]
+    new_daily_input.loc[:,'R'] = r_vars.mean(axis=1)
+    new_daily_input.loc[:,'R5']= r_vars.quantile(q=0.05,axis=1)
+    new_daily_input.loc[:,'R25']=r_vars.quantile(q=0.25,axis=1)
+    new_daily_input.loc[:,'R75']=r_vars.quantile(q=0.75,axis=1)
+    new_daily_input.loc[:,'R95']=r_vars.quantile(q=0.95,axis=1)
     
     return new_daily_input
 

@@ -123,14 +123,14 @@ def readnetcdf_in_shp_db(nc_fileName, STAT_CODE, res=5500, plot=False):
 
     conn = psycopg2.connect(host="10.8.244.31",
                        database="climate_data",
-                       user="ado_admin",
-                       password="oda347hydro",
+                       user="ado_user",
+                       password="hydro#ado",
                        port=5432)
     cur = conn.cursor()
     
     # get the metadata
     query = f"""
-            SELECT "geom" FROM "hydrology"."ADO_BASINS" WHERE "id_station" = '{STAT_CODE}'    
+            SELECT "geom" FROM "hydrology"."ado_basins_CCM2" WHERE "id_station" = '{STAT_CODE}'    
             """
     df = pd.read_sql_query(query, conn)
     
@@ -199,15 +199,14 @@ def xarray2df(xa, varnamedest,varnameor=False):
     return frame
 
 
-    
 def get_discharge_from_DB(STAT_CODE):
     #read the csv file with the daily discharge
 
     # establish connection using information supplied in documentation
     conn = psycopg2.connect(host="10.8.244.31",
                            database="climate_data",
-                           user="ado_admin",
-                           password="oda347hydro",
+                           user="ado_user",
+                           password="hydro#ado",
                            port=5432)
     cur = conn.cursor()
     
@@ -220,7 +219,7 @@ def get_discharge_from_DB(STAT_CODE):
    
     #set the date in a proper format
     df.index = pd.to_datetime(df.date)
-    
+    df.drop(columns='date',inplace=True)
     # close the connection when finished
     cur.close()
     conn.close()

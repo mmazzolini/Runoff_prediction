@@ -18,15 +18,16 @@ import seaborn as sns
 
 
 
-def SVR_nested_CV_gridsearch(daily_input, C_range,epsilon_range, t_range,t_unit,n_splits,test_size):
-                         
+def SVR_nested_CV_gridsearch(daily_input, C_range, epsilon_range, t_range,t_unit,n_splits,test_size):
+
+
     for t_length in t_range:
         it_matrix=create_it_matrix(daily_input,t_length,t_unit).astype('float32')
         tscv = TimeSeriesSplit(gap=t_unit ,n_splits=n_splits, test_size=test_size)
         sets = tscv.split(it_matrix.index)
         
         all_models= []
-    
+        #pdb.set_trace()
         for train_index, test_index in sets:
             #validation set is the last 2 years of the "old_training"
             val_index   = train_index[-365:]
@@ -44,6 +45,7 @@ def SVR_nested_CV_gridsearch(daily_input, C_range,epsilon_range, t_range,t_unit,
             parameters = {'transformedtargetregressor__regressor__C': C_range,
                           'transformedtargetregressor__regressor__epsilon': epsilon_range}
 
+
             svr_model = GridSearchCV(svr_estimator, cv=trainCvSplit, param_grid=parameters, n_jobs=-1, verbose=1, refit=True, return_train_score=True)
 
             # execute the grid search
@@ -58,24 +60,21 @@ def SVR_nested_CV_gridsearch(daily_input, C_range,epsilon_range, t_range,t_unit,
         #GROUP BY PARAMETERS AND AVERAGE OVER THE DIFFERENT VALIDATION SETS
         par=(['param_transformedtargetregressor__regressor__C','param_transformedtargetregressor__regressor__epsilon'])
         avg_models = all_m.groupby(par).mean()
-        avg_models['train_test_diff']= avg_models.mean_train_score - avg_models.mean_test_score
-
+        #avg_models['train_test_diff']= avg_models.mean_train_score - avg_models.mean_test_score
+        
         # SELECT THE SINGLE BEST MODEL OVERALL
         best_model_overall = avg_models.loc[[avg_models.mean_test_score.idxmax()]]
         
         best_C=best_model_overall.reset_index().param_transformedtargetregressor__regressor__C[0]
         best_epsilon = best_model_overall.reset_index().param_transformedtargetregressor__regressor__epsilon[0]
-    
+
         #INVESTIGATE WITH HEATMAPS THE FACT THAT WE'RE NOT OVERFITTING
         # get the coordinates of the "best model"
         y=np.where(epsilon_range==best_epsilon)[0]+0.5
         x=np.where(C_range==best_C)[0]+0.5
 
-        #get the models with a certain number of components
-
         hm_test = avg_models.reset_index().pivot( columns='param_transformedtargetregressor__regressor__C', index='param_transformedtargetregressor__regressor__epsilon', values='mean_test_score')
         hm_train= avg_models.reset_index().pivot(columns='param_transformedtargetregressor__regressor__C',index='param_transformedtargetregressor__regressor__epsilon',values='mean_train_score')
-
         plt.figure(figsize=(15,7))
         plt.subplot(1,2,1)
         sns.heatmap(hm_test,vmin=hm_test.min().min(),vmax=hm_train.max().max())
@@ -88,7 +87,7 @@ def SVR_nested_CV_gridsearch(daily_input, C_range,epsilon_range, t_range,t_unit,
         plt.plot(x,y,marker='o')
 
         plt.tight_layout()
-        
+            
 
         # Check if the best C (or epsion) is in the border of the grid
         if best_C == max(C_range) or best_C == min(C_range):
@@ -136,14 +135,15 @@ def SVR_PCA_nested_CV_gridsearch(daily_input, C_range, epsilon_range, components
             all_models.append(pd.DataFrame(svr_model.cv_results_))
         
         #PUT ALL THE TRAINED MODELS AND RESULTS IN A DATAFRAME
-        all_m = pd.DataFrame(data=None,columns=all_models[0].columns)
-        for i in all_models :
-            all_m=all_m.append(i);
+        all_m = pd.concat(all_models)
         
         #GROUP BY PARAMETERS AND AVERAGE OVER THE DIFFERENT VALIDATION SETS
         par=(['param_pca__n_components', 'param_transformedtargetregressor__regressor__C', 'param_transformedtargetregressor__regressor__epsilon'])
+        
+        
+        #pdb.set_trace()
         avg_models = all_m.groupby(par).mean()
-        avg_models['train_test_diff']= avg_models.mean_train_score - avg_models.mean_test_score
+        #avg_models['train_test_diff']= avg_models.mean_train_score - avg_models.mean_test_score
 
         # SELECT THE SINGLE BEST MODEL OVERALL
         best_model_overall = avg_models.loc[[avg_models.mean_test_score.idxmax()]]
@@ -176,7 +176,8 @@ def SVR_PCA_nested_CV_gridsearch(daily_input, C_range, epsilon_range, components
 
         plt.tight_layout()
         
-        # Check if the best C (or epsion) is in the border of the grid
+               
+        # Check if the best C, epsion or gamma is in the border of the grid
         if best_C == max(C_range) or best_C == min(C_range):
             print(f'Warning: best C found on the grid limit: C = {best_C}')
         if best_epsilon == max(epsilon_range) or best_epsilon == min(epsilon_range):
