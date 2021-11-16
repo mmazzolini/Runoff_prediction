@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import numpy as np
 
-from sklearn.svm import SVR 
+from sklearn.svm import SVR, LinearSVR
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
@@ -18,7 +18,7 @@ import seaborn as sns
 
 
 
-def SVR_nested_CV_gridsearch(daily_input, C_range, epsilon_range, t_range,t_unit,n_splits,test_siz, linear=False):
+def SVR_nested_CV_gridsearch(daily_input, C_range, epsilon_range, t_range, t_unit, n_splits, test_siz, linear=False):
 
 
     for t_length in t_range:
@@ -41,7 +41,7 @@ def SVR_nested_CV_gridsearch(daily_input, C_range, epsilon_range, t_range,t_unit
             
             
             if linear:
-                svr_estimator = LinearSVR(kernel='rbf', gamma='scale')
+                svr_estimator = LinearSVR(tol=0.0001,random_state=0)
             else:
                 svr_estimator = SVR(kernel='rbf', gamma='scale', cache_size=20000)
 
