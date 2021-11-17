@@ -278,7 +278,7 @@ def daily_climatology(daily_input,t_unit):
         
 
     daily_t_unit = pd.concat([runoff_t_unit, temp_t_unit, prec_t_unit, evap_t_unit, snow_t_unit], axis=1)
-    daily_mean = daily_t_unit.groupby(by=daily_t_unit.index.day_of_year).mean()
+    daily_mean = daily_t_unit.groupby(by=daily_t_unit.index.dayofyear).mean()
 
     #pdb.set_trace()
     return daily_mean
