@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import numpy as np
 
-from sklearn.svm import SVR 
+from sklearn.svm import SVR, LinearSVR
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
