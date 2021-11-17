@@ -615,7 +615,7 @@ def compute_anomalies(climatologies,pred):
     anomalies=pd.DataFrame(pred.true_runoff-pred.runoff_clim,columns=['true_runoff'])
     
     #get the climatology of prediction on the wanted days
-    clim_on_test_dates = pd.DataFrame(climatologies.loc[anomalies.index.day_of_year])
+    clim_on_test_dates = pd.DataFrame(climatologies.loc[anomalies.index.dayofyear])
     
     #create an array with the proper shape
     repeated_clim=np.repeat((np.array(clim_on_test_dates.prediction)[...,np.newaxis]),
