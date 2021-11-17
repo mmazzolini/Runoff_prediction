@@ -41,7 +41,7 @@ def SVR_nested_CV_gridsearch(daily_input, C_range, epsilon_range, t_range,t_unit
             
             
             if linear:
-                svr_estimator = LinearSVR(kernel='rbf', gamma='scale')
+                svr_estimator = LinearSVR(tol=0.0001,random_state=0)
             else:
                 svr_estimator = SVR(kernel='rbf', gamma='scale', cache_size=6000)
 
@@ -126,7 +126,7 @@ def SVR_PCA_nested_CV_gridsearch(daily_input, C_range, epsilon_range, components
             y = it_matrix['Q']
 
             if linear:
-                svr_estimator = LinearSVR(kernel='rbf', gamma='scale')
+                svr_estimator = LinearSVR(tol=0.0001, random_state=0)
             else:
                 svr_estimator = SVR(kernel='rbf', gamma='scale', cache_size=6000)
                 

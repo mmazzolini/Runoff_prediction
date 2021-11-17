@@ -590,8 +590,6 @@ def spatial_stats_daily_input(daily_input):
     
     return new_daily_input
 
-
-
 def create_gap(train_index,test_index,gap):
     right=((train_index+1 == test_index[0]).sum()==1) and ((train_index-1 == test_index[-1]).sum()==0)
     centre=((train_index+1 == test_index[0]).sum()==1) and ((train_index-1 == test_index[-1]).sum()==1)
