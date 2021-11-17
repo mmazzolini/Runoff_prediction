@@ -61,12 +61,12 @@ def daily_climatology_p_et_ensemble2(daily_input,t_unit,radius=2/3):
 
         
     daily_t_unit = pd.concat([runoff_t_unit ,prec_t_unit, temp_t_unit, evap_t_unit, snow_t_unit], axis=1)
-    daily = daily_t_unit.groupby(by=daily_t_unit.index.day_of_year).mean()
+    daily = daily_t_unit.groupby(by=daily_t_unit.index.dayofyear).mean()
         
-    prec_mean=prec_t_unit.groupby(by=prec_t_unit.index.day_of_year).mean()
-    prec_q75=prec_t_unit.groupby(by=prec_t_unit.index.day_of_year).quantile(q=0.75)
+    prec_mean=prec_t_unit.groupby(by=prec_t_unit.index.dayofyear).mean()
+    prec_q75=prec_t_unit.groupby(by=prec_t_unit.index.dayofyear).quantile(q=0.75)
     prec_q75=prec_q75.add_suffix('_Q75')
-    prec_q25=prec_t_unit.groupby(by=prec_t_unit.index.day_of_year).quantile(q=0.25)
+    prec_q25=prec_t_unit.groupby(by=prec_t_unit.index.dayofyear).quantile(q=0.25)
     prec_q25=prec_q25.add_suffix('_Q25')
 
     
@@ -89,7 +89,7 @@ def daily_climatology_p_et_ensemble2(daily_input,t_unit,radius=2/3):
     for i in range(1,367):
 
         #get dates where the dayofyear is ==1 for the 3 variables
-        day_i=(prec_t_unit.index.day_of_year==i)
+        day_i=(prec_t_unit.index.dayofyear==i)
         prec_t_unit_i=prec_t_unit[day_i]
         temp_t_unit_i=temp_t_unit[day_i]
         evap_t_unit_i=evap_t_unit[day_i]
@@ -177,12 +177,12 @@ def daily_climatology_p_et_ensemble(daily_input,t_unit,radius=2/3):
 
         
     daily_t_unit = pd.concat([runoff_t_unit ,prec_t_unit, other_t_unit], axis=1)
-    daily = daily_t_unit.groupby(by=daily_t_unit.index.day_of_year).mean()
+    daily = daily_t_unit.groupby(by=daily_t_unit.index.dayofyear).mean()
         
-    prec_mean=prec_t_unit.groupby(by=prec_t_unit.index.day_of_year).mean()
-    prec_q75=prec_t_unit.groupby(by=prec_t_unit.index.day_of_year).quantile(q=0.75)
+    prec_mean=prec_t_unit.groupby(by=prec_t_unit.index.dayofyear).mean()
+    prec_q75=prec_t_unit.groupby(by=prec_t_unit.index.dayofyear).quantile(q=0.75)
     prec_q75=prec_q75.add_suffix('_Q75')
-    prec_q25=prec_t_unit.groupby(by=prec_t_unit.index.day_of_year).quantile(q=0.25)
+    prec_q25=prec_t_unit.groupby(by=prec_t_unit.index.dayofyear).quantile(q=0.25)
     prec_q25=prec_q25.add_suffix('_Q25')
 
     other_q75=pd.DataFrame(data=None, columns=other_t_unit.columns)
@@ -197,7 +197,7 @@ def daily_climatology_p_et_ensemble(daily_input,t_unit,radius=2/3):
     for i in range(1,367):
 
         #get dates where the dayofyear is ==1 for the 3 variables
-        day_i=(prec_t_unit.index.day_of_year==i)
+        day_i=(prec_t_unit.index.dayofyear==i)
         prec_t_unit_i=prec_t_unit[day_i]
         other_t_unit_i=other_t_unit[day_i]
 
@@ -278,13 +278,13 @@ def daily_climatology_p_ensemble(daily_input, t_unit):
         #prec_t_unit = pd.concat([shift_series_t_unitdays(prec_t_unit.loc[:, col], (-t_length + 1, 1)) for col in prec_t_unit], axis=1)
     
     daily_t_unit = pd.concat([runoff_t_unit, temp_t_unit, evap_t_unit], axis=1)
-    daily = daily_t_unit.groupby(by=daily_t_unit.index.day_of_year).mean()
+    daily = daily_t_unit.groupby(by=daily_t_unit.index.dayofyear).mean()
     
 
-    prec_mean=prec_t_unit.groupby(by=prec_t_unit.index.day_of_year).mean()
-    prec_q75 =prec_t_unit.groupby(by=prec_t_unit.index.day_of_year).quantile(q=0.75)
+    prec_mean=prec_t_unit.groupby(by=prec_t_unit.index.dayofyear).mean()
+    prec_q75 =prec_t_unit.groupby(by=prec_t_unit.index.dayofyear).quantile(q=0.75)
     prec_q75=prec_q75.add_suffix('_Q75')
-    prec_q25 =prec_t_unit.groupby(by=prec_t_unit.index.day_of_year).quantile(q=0.25)
+    prec_q25 =prec_t_unit.groupby(by=prec_t_unit.index.dayofyear).quantile(q=0.25)
     prec_q25=prec_q25.add_suffix('_Q25')
     daily   = pd.concat([daily,prec_mean,prec_q75,prec_q25], axis=1)
 

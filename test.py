@@ -50,7 +50,7 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_
         # get the test dates (end of the month)
         test_dates = it_matrix.index[test_index]#[daily_input.index.is_month_end]
         # and their day of the year
-        doy_test_dates = test_dates.day_of_year
+        doy_test_dates = test_dates.dayofyear
 
         # Save the true runoff values (with t_unit days rolling average)
         target = {}
@@ -58,7 +58,7 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_
 
         # Compute runoff monthly climatology using the whole dataset
         runoff_daily_clim = daily_input.Q.rolling(30, min_periods=30).mean()
-        target['runoff_clim'] = [runoff_daily_clim.loc[runoff_daily_clim.index.day_of_year == d].mean() for d in doy_test_dates]
+        target['runoff_clim'] = [runoff_daily_clim.loc[runoff_daily_clim.index.dayofyear == d].mean() for d in doy_test_dates]
 
         X_trueTP = it_matrix.loc[test_dates, :].drop(columns='Q')
         target['trueTP'] = svr_model_tuned.predict(X_trueTP)
@@ -80,7 +80,7 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_
             change_dest = [c for c in X_climTP.columns if c.split('_')[1] == str(-lt + 1)]
             change_source = [c.split('_')[0] for c in change_dest]
             #pdb.set_trace()
-            X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source].values
+            X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).dayofyear][change_source].values
             
             #predict
             target[f'climTP_lt{lt}'] = svr_model_tuned.predict(X_climTP)
@@ -93,10 +93,10 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_
                     change_source_25.append(i+'_Q25')
                     change_source_75.append((i+'_Q75'))
 
-            X_climTP_Q25.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source_25].values
+            X_climTP_Q25.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).dayofyear][change_source_25].values
             target[f'climTP_lt{lt}_Q25'] = svr_model_tuned.predict(X_climTP_Q25)
 
-            X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source_75].values
+            X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).dayofyear][change_source_75].values
             target[f'climTP_lt{lt}_Q75'] = svr_model_tuned.predict(X_climTP_Q75)
             #pdb.set_trace()
 
@@ -143,7 +143,7 @@ def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, t_unit,  n_split
         # get the test dates (end of the month)
         test_dates = it_matrix.index[test_index]#[daily_input.index.is_month_end]
         # and their day of the year
-        doy_test_dates = test_dates.day_of_year
+        doy_test_dates = test_dates.dayofyear
 
         # Save the true runoff values (with t_unit days rolling average)
         target = {}
@@ -151,7 +151,7 @@ def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, t_unit,  n_split
 
         # Compute runoff monthly climatology using the whole dataset
         runoff_daily_clim = daily_input.Q.rolling(30, min_periods=30).mean()
-        target['runoff_clim'] = [runoff_daily_clim.loc[runoff_daily_clim.index.day_of_year == d].mean() for d in doy_test_dates]
+        target['runoff_clim'] = [runoff_daily_clim.loc[runoff_daily_clim.index.dayofyear == d].mean() for d in doy_test_dates]
 
         X_trueTP = it_matrix.loc[test_dates, :].drop(columns='Q')
         target['trueTP'] = svr_model_tuned.predict(X_trueTP)
@@ -172,7 +172,7 @@ def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, t_unit,  n_split
             change_dest = [c for c in X_climTP.columns if c.split('_')[1] == str(-lt + 1)]
             change_source = [c.split('_')[0] for c in change_dest]
             #pdb.set_trace()
-            X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source].values
+            X_climTP.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).dayofyear][change_source].values
             
             #predict
             target[f'climTP_lt{lt}'] = svr_model_tuned.predict(X_climTP)
@@ -185,10 +185,10 @@ def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, t_unit,  n_split
                     change_source_25.append(i+'_Q25')
                     change_source_75.append((i+'_Q75'))
 
-            X_climTP_Q25.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source_25].values
+            X_climTP_Q25.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).dayofyear][change_source_25].values
             target[f'climTP_lt{lt}_Q25'] = svr_model_tuned.predict(X_climTP_Q25)
 
-            X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).day_of_year][change_source_75].values
+            X_climTP_Q75.loc[:, change_dest]=daily_clim.loc[(test_dates-np.timedelta64(t_unit*(lt-1),'D')).dayofyear][change_source_75].values
             target[f'climTP_lt{lt}_Q75'] = svr_model_tuned.predict(X_climTP_Q75)
             
             #pdb.set_trace()
