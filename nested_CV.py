@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import numpy as np
 
-from sklearn.svm import SVR
+from sklearn.svm import SVR 
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
@@ -18,12 +18,12 @@ import seaborn as sns
 
 
 
-def SVR_nested_CV_gridsearch(daily_input, C_range, epsilon_range, t_range,t_unit,n_splits,test_size):
+def SVR_nested_CV_gridsearch(daily_input, C_range, epsilon_range, t_range,t_unit,n_splits,test_siz, linear=False):
 
 
     for t_length in t_range:
         it_matrix=create_it_matrix(daily_input,t_length,t_unit).astype('float32')
-        tscv = TimeSeriesSplit(gap=t_unit ,n_splits=n_splits, test_size=test_size)
+        tscv = TimeSeriesSplit(n_splits=n_splits, test_size=test_siz,gap=t_unit)
         sets = tscv.split(it_matrix.index)
         
         all_models= []
@@ -38,8 +38,14 @@ def SVR_nested_CV_gridsearch(daily_input, C_range, epsilon_range, t_range,t_unit
             
             X = it_matrix.drop(columns='Q')
             y = it_matrix['Q']
+            
+            
+            if linear:
+                svr_estimator = LinearSVR(kernel='rbf', gamma='scale')
+            else:
+                svr_estimator = SVR(kernel='rbf', gamma='scale', cache_size=6000)
 
-            svr_estimator = SVR(kernel='rbf', gamma='scale', cache_size=1000)
+
             svr_estimator = make_pipeline(StandardScaler(),
                                           TransformedTargetRegressor(regressor=svr_estimator, transformer=StandardScaler()))
             parameters = {'transformedtargetregressor__regressor__C': C_range,
@@ -99,7 +105,7 @@ def SVR_nested_CV_gridsearch(daily_input, C_range, epsilon_range, t_range,t_unit
     return best_C, best_epsilon
 
 
-def SVR_PCA_nested_CV_gridsearch(daily_input, C_range, epsilon_range, components_range, t_range,t_unit,n_splits,test_size):
+def SVR_PCA_nested_CV_gridsearch(daily_input, C_range, epsilon_range, components_range, t_range,t_unit,n_splits,test_size, linear=False):
                          
     for t_length in t_range:
         it_matrix=create_it_matrix(daily_input,t_length,t_unit).astype('float32')
@@ -119,7 +125,11 @@ def SVR_PCA_nested_CV_gridsearch(daily_input, C_range, epsilon_range, components
             X = it_matrix.drop(columns='Q')
             y = it_matrix['Q']
 
-            svr_estimator = SVR(kernel='rbf', gamma='scale', cache_size=1000)
+            if linear:
+                svr_estimator = LinearSVR(kernel='rbf', gamma='scale')
+            else:
+                svr_estimator = SVR(kernel='rbf', gamma='scale', cache_size=6000)
+                
             svr_estimator = make_pipeline(StandardScaler(),
                                           PCA(),
                                           TransformedTargetRegressor(regressor=svr_estimator, transformer=StandardScaler()))

@@ -19,7 +19,7 @@ from sf_runoff import  smape
 import pdb
 import seaborn as sns
 
-def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_size, radius_for_ensemble):
+def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_size, radius_for_ensemble, linear=False):
     
     #compute the daily climatology and the quantile analysis
     daily_clim = daily_climatology_p_et_ensemble(daily_input,t_unit,radius_for_ensemble)
@@ -37,9 +37,12 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_
         y = it_matrix['Q'].iloc[train_index]
         
         #set up the model according to the parameters
-        svr_model_tuned = SVR(kernel='rbf', gamma='scale', C=C, epsilon=eps, cache_size=1000)
+        if linear:
+            svr_estimator = LinearSVR(tol=0.0001, C=C, epsilon=eps,random_state=0)
+        else:
+            svr_estimator = SVR(kernel='rbf', gamma='scale', C=C, epsilon=eps, cache_size=7000)
         svr_model_tuned = make_pipeline(StandardScaler(),
-                                        TransformedTargetRegressor(regressor=svr_model_tuned, transformer=StandardScaler()))
+                                        TransformedTargetRegressor(regressor=svr_estimator, transformer=StandardScaler()))
 
         #fit the model
         svr_model_tuned.fit(X, y)
@@ -108,7 +111,7 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_
 
 
 
-def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, t_unit,  n_splits, test_size, radius_for_ensemble):
+def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, t_unit,  n_splits, test_size, radius_for_ensemble, linear=False):
     
     #compute the daily climatology and the quantile analysis
     daily_clim = daily_climatology_p_et_ensemble(daily_input,t_unit,radius_for_ensemble)
@@ -126,10 +129,13 @@ def nested_CV_PCA_SVR_predict(daily_input, C, eps, n, t_length, t_unit,  n_split
         y = it_matrix['Q'].iloc[train_index]
         
         #set up the model according to the parameters
-        svr_model_tuned = SVR(kernel='rbf', gamma='gamma', C=C, epsilon=eps, cache_size=1000)
+        if linear:
+            svr_estimator = LinearSVR(tol=0.0001, C=C, epsilon=eps,random_state=0)
+        else:
+            svr_estimator = SVR(kernel='rbf', gamma='scale', C=C, epsilon=eps, cache_size=7000)
         svr_model_tuned = make_pipeline(StandardScaler(),
                                         PCA(n_components=n),
-                                      TransformedTargetRegressor(regressor=svr_model_tuned, transformer=StandardScaler()))
+                                      TransformedTargetRegressor(regressor=svr_estimator, transformer=StandardScaler()))
 
         #fit the model
         svr_model_tuned.fit(X, y)

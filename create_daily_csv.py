@@ -12,7 +12,7 @@ import pdb
 
 def check_data_gap(df):
 
-    df.dropna(axis='columns', how='all', inplace=True)
+    df.dropna(axis='rows', how='all', inplace=True)
     missing_dates = pd.date_range(df.index.min(), df.index.max()).difference(df.index)
     
     print(f'Date start: {df.index.min().strftime("%Y-%m-%d")}, date end: {df.index.max().strftime("%Y-%m-%d")}')
