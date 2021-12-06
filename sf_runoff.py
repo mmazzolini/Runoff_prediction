@@ -16,6 +16,23 @@ import os
 
 import pdb
 
+
+def create_gap(train_index,test_index,gap):
+    right=((train_index+1 == test_index[0]).sum()==1) and ((train_index-1 == test_index[-1]).sum()==0)
+    centre=((train_index+1 == test_index[0]).sum()==1) and ((train_index-1 == test_index[-1]).sum()==1)
+    left = ((train_index+1 == test_index[0]).sum()==0) and ((train_index-1 == test_index[-1]).sum()==1)
+    if right:
+        train_index=train_index[0:-gap]
+
+    if left:
+        train_index=train_index[gap:]
+
+    if centre:
+        pos = np.where(train_index+1 == test_index[0])[0][0]
+        train_index=np.concatenate((train_index[:pos-gap],train_index[pos+gap:]),axis=0)
+    return train_index
+    
+
 def shift_series_(s, shift_range,t_unit):
 
     s_shifts = [s.shift(-t_unit * shift, freq='D').rename(f'{s.name}_{shift}') for shift in range(*shift_range)]
@@ -78,6 +95,16 @@ def create_it_matrix(daily_input, t_length,t_unit):
     # Create the input-target matrix
     return pd.concat(output, axis=1).dropna()
 
+
+
+def create_in_matrix(daily_input, t_length,t_unit):
+
+    # Compute the t_unit days average temperature
+    if not daily_input.empty:
+        daily_input_t_unit = daily_input.rolling(t_unit, min_periods=t_unit).mean()
+        output = pd.concat([shift_series_(daily_input_t_unit[col], (-t_length + 1, 1),t_unit) for col in daily_input_t_unit], axis=1)
+
+    return output;
 
 
 
