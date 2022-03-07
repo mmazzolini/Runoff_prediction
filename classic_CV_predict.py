@@ -17,11 +17,11 @@ from sklearn.model_selection import GridSearchCV,TimeSeriesSplit, KFold
 from sklearn.metrics import mean_squared_error, r2_score
 from sf_runoff import  smape
 
-
 import pdb
 import seaborn as sns
 
 def classic_CV_SVR_predict(daily_input, C, eps,t_length,t_unit, n_splits, linear=False):#, radius_for_ensemble):
+
     
     #compute the daily climatology and the quantile analysis
     daily_clim = daily_climatology_p_et_ensemble(daily_input,0,t_unit)
@@ -68,6 +68,9 @@ def classic_CV_SVR_predict(daily_input, C, eps,t_length,t_unit, n_splits, linear
         # Compute runoff monthly climatology using the whole dataset
         runoff_daily_clim = daily_input.Q.rolling(30, min_periods=30).mean()
         target['runoff_clim'] = [runoff_daily_clim.loc[runoff_daily_clim.index.dayofyear == d].mean() for d in doy_test_dates]
+        target['runoff_clim_25'] = [runoff_daily_clim.loc[runoff_daily_clim.index.dayofyear == d].quantile(q=0.25) for d in doy_test_dates]
+        target['runoff_clim_75'] = [runoff_daily_clim.loc[runoff_daily_clim.index.dayofyear == d].quantile(q=0.75) for d in doy_test_dates]
+        
 
         X_trueTP = it_matrix.loc[test_dates, :].drop(columns='Q')
         target['prediction'] = svr_model_tuned.predict(X_trueTP)

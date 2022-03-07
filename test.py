@@ -30,7 +30,7 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_
     sets = tscv.split(it_matrix.index)
     j=0;
     prediction=pd.DataFrame(data=None)
-    
+    #pdb.set_trace()
     for train_index, test_index in sets:
         #set up training features
         X = it_matrix.drop(columns='Q').iloc[train_index]
@@ -56,10 +56,15 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_
         target = {}
         target['true_runoff'] = daily_input.Q.rolling(30, min_periods=30).mean().loc[test_dates]
 
+
+
         # Compute runoff monthly climatology using the whole dataset
         runoff_daily_clim = daily_input.Q.rolling(30, min_periods=30).mean()
         target['runoff_clim'] = [runoff_daily_clim.loc[runoff_daily_clim.index.dayofyear == d].mean() for d in doy_test_dates]
-
+        target['runoff_clim_25'] = [runoff_daily_clim.loc[runoff_daily_clim.index.dayofyear == d].quantile(q=0.25) for d in doy_test_dates]
+        target['runoff_clim_75'] = [runoff_daily_clim.loc[runoff_daily_clim.index.dayofyear == d].quantile(q=0.75) for d in doy_test_dates]
+        
+        
         X_trueTP = it_matrix.loc[test_dates, :].drop(columns='Q')
         target['trueTP'] = svr_model_tuned.predict(X_trueTP)
 
@@ -214,10 +219,16 @@ def plot_prediction(prediction):
         pred.loc[:,'date']= pred.index
 
         ax,fig=plt.subplots(figsize=(20,10))
-        #plot the real
+        
+        #plot the real and modelled discharge
         sns.lineplot(y=("true_runoff"),x="date",data=pred,color='red',linewidth=1.3,legend='auto')
-        sns.lineplot(y=("runoff_clim"),x="date",data=pred,color='yellow',linewidth=1.3,legend='auto')
         sns.lineplot(y=("trueTP"),x="date",data=pred,color='green',linewidth=1.3,legend='auto')
+
+
+        #plot the clim_distr
+        sns.lineplot(y=("runoff_clim"),x="date",data=pred,color='yellow',linewidth=1.3,legend='auto')
+        lt1=pred[["runoff_clim_25","runoff_clim_75"]]
+        plt.fill_between(x=lt1.index, y1=lt1['runoff_clim_25'], y2=lt1['runoff_clim_75'], alpha=0.12,color='y')
 
 
         #plot the lead_time_
@@ -284,11 +295,70 @@ def evaluate_prediction(prediction):
             to_drop.append(c)
     to_drop.append('split')
     runoff=prediction.drop(columns=to_drop)
-
-    runoff_error_r2=runoff.apply(lambda y_pred: r2_score(runoff['true_runoff'], y_pred), axis=0)
+    
+    dictio={"true_runoff" : "measured runoff",
+        "runoff_clim" : "runoff climatology",
+        "trueTP"      : "model output",
+        "climTP_lt1"  : "output 1 month lead time",
+        "climTP_lt2"  : "output 2 month lead time",
+        "climTP_lt3"  : "output 3 month lead time",
+        "climTP_lt4"  : "output 4 month lead time",
+        "climTP_lt5"  : "output 5 month lead time",
+       }
+       
+    runoff = runoff.rename(columns=dictio)
+    runoff_error_r2=runoff.apply(lambda y_pred: r2_score(runoff['measured runoff'], y_pred), axis=0)
     #runoff_error_smape=runoff.apply(lambda y_pred: smape(runoff['true_runoff'], y_pred), axis=0)
     
     #runoff_error_smape.plot.bar(ylabel="SMAPE score [/]")
-    runoff_error_r2.plot.bar(ylabel="R^2 score [/]",)
+    
+
+    
+    #pdb.set_trace()
+   
+    runoff_error_r2.plot.bar(ylabel="R^2 score [/]", rot=90)
+    #plt.legend(['MEASURED DISCHARGE','RUNOFF CLIMATOLOGY','MODEL PREDICTION','PREDICTION WITH 1 MONTH LEAD TIME','','']
     
     return runoff_error_r2
+    
+
+
+def evaluate_class(prediction):
+
+    tp=np.sum(np.logical_and(prediction.true_runoff<prediction.runoff_clim_25, prediction.trueTP<prediction.runoff_clim_25))
+    fp=np.sum(np.logical_and(prediction.true_runoff>prediction.runoff_clim_25, prediction.trueTP<prediction.runoff_clim_25))
+    p=np.sum(prediction.true_runoff<prediction.runoff_clim_25)
+    tn=np.sum(np.logical_and(prediction.true_runoff>prediction.runoff_clim_25, prediction.trueTP>prediction.runoff_clim_25))
+    fn=np.sum(np.logical_and(prediction.true_runoff<prediction.runoff_clim_25, prediction.trueTP>prediction.runoff_clim_25))
+    n=np.sum(prediction.true_runoff>prediction.runoff_clim_25)
+
+    #sensitivity
+    sen=tp/p
+
+    #specificity
+    spe=tn/n
+
+    #precision
+    prec=tp/(tp+fp)
+    
+    result = pd.DataFrame(data=np.transpose(np.array([[sen],[spe],[prec],[p]])),columns=['sensitivity','specificity','precision','number'])
+   
+    
+    return result
+    
+    
+    
+def evaluate_class_season(prediction):
+    
+    prediction['season'] = prediction.index.month%12 // 3
+
+    results=pd.DataFrame(data=None)
+    
+    for s in range(4):
+
+        r = evaluate_class(prediction[prediction.season==s])
+        r['season']=s
+        results=results.append(r)
+
+    return results
+    

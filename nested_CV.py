@@ -25,15 +25,14 @@ def SVR_nested_CV_gridsearch(daily_input, C_range, epsilon_range, t_range,t_unit
         it_matrix=create_it_matrix(daily_input,t_length,t_unit).astype('float32')
         tscv = TimeSeriesSplit(n_splits=n_splits, test_size=test_siz,gap=t_unit)
         sets = tscv.split(it_matrix.index)
-        
         all_models= []
         #pdb.set_trace()
         for train_index, test_index in sets:
             #validation set is the last 2 years of the "old_training"
-            val_index   = train_index[-365:]
+            val_index   = train_index[-365*2:]
 
-            #training set is reduced by 2y and 1month"
-            train_index_update = train_index[:-395]
+            #training set is reduced by one year and 1month"
+            train_index_update = train_index[:-365*2-30]
             trainCvSplit = [(list(train_index_update),list(val_index))]
             
             X = it_matrix.drop(columns='Q')
@@ -43,7 +42,7 @@ def SVR_nested_CV_gridsearch(daily_input, C_range, epsilon_range, t_range,t_unit
             if linear:
                 svr_estimator = LinearSVR(tol=0.0001,random_state=0)
             else:
-                svr_estimator = SVR(kernel='rbf', gamma='scale', cache_size=6000)
+                svr_estimator = SVR(kernel='rbf', gamma='scale', cache_size=15000)
 
 
             svr_estimator = make_pipeline(StandardScaler(),
@@ -74,7 +73,7 @@ def SVR_nested_CV_gridsearch(daily_input, C_range, epsilon_range, t_range,t_unit
         best_C=best_model_overall.reset_index().param_transformedtargetregressor__regressor__C[0]
         best_epsilon = best_model_overall.reset_index().param_transformedtargetregressor__regressor__epsilon[0]
 
-        #INVESTIGATE WITH HEATMAPS THE FACT THAT WE'RE NOT OVERFITTING
+        #INVESTIGATE WITH HEATMAPS OVERFITTING
         # get the coordinates of the "best model"
         y=np.where(epsilon_range==best_epsilon)[0]+0.5
         x=np.where(C_range==best_C)[0]+0.5
@@ -116,10 +115,10 @@ def SVR_PCA_nested_CV_gridsearch(daily_input, C_range, epsilon_range, components
     
         for train_index, test_index in sets:
             #validation set is the last 2 years of the "old_training"
-            val_index   = train_index[-365:]
+            val_index   = train_index[-365*2:]
 
             #training set is reduced by 2y and 1month"
-            train_index_update = train_index[:-395]
+            train_index_update = train_index[:-365*2-30]
             trainCvSplit = [(list(train_index_update),list(val_index))]
             
             X = it_matrix.drop(columns='Q')
@@ -128,7 +127,7 @@ def SVR_PCA_nested_CV_gridsearch(daily_input, C_range, epsilon_range, components
             if linear:
                 svr_estimator = LinearSVR(tol=0.0001, random_state=0)
             else:
-                svr_estimator = SVR(kernel='rbf', gamma='scale', cache_size=6000)
+                svr_estimator = SVR(kernel='rbf', gamma='scale', cache_size=12000)
                 
             svr_estimator = make_pipeline(StandardScaler(),
                                           PCA(),
