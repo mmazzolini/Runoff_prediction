@@ -16,3 +16,5 @@ __pycache__/test.cpython-39.pyc
 __pycache__/test.cpython-39.pyc
 *.joblib
 trial.tif
+STATIONS_HEIGHT_emilia.csv
+STATIONS_HEIGHT.csv

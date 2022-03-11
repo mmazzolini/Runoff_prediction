@@ -52,7 +52,7 @@ def readnetcdf_in_shp_db(nc_fileName, STAT_CODE, res=5500, plot=False):
     
     # get the metadata
     query = f"""
-            SELECT "geom" FROM "hydrology"."ado_basins_CCM2_final2" WHERE "id_station" = '{STAT_CODE}'    
+            SELECT "geom" FROM "hydrology"."catchment_area" WHERE "id_station" = '{STAT_CODE}'    
             """
     df = pd.read_sql_query(query,conn)
     
@@ -231,7 +231,7 @@ def readsnow_in_shp_db(src_folder,mask_file, STAT_CODE, res=5500, plot=False):
     
     # get the OUTLINE
     query = f"""
-            SELECT "geom" FROM "hydrology"."ado_basins_CCM2_final2" WHERE "id_station" = '{STAT_CODE}'
+            SELECT "geom" FROM "hydrology"."catchment_area" WHERE "id_station" = '{STAT_CODE}'
             """
     df = pd.read_sql_query(query,conn)
     

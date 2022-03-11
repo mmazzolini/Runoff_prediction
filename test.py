@@ -76,12 +76,12 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_
         X_climTP_Q25=X_trueTP.copy()
         X_climTP_Q75=X_trueTP.copy()
 
-        #predict till 6 months of advance
+        #predict till 6 time_units of advance
         lead_times = range(1,6)
         for lt in lead_times:
             
             
-            # modify the X matrix by substituting the climatology to the real meteo vars for lt months.
+            # modify the X matrix by substituting the climatology to the real meteo vars for lt.
             change_dest = [c for c in X_climTP.columns if c.split('_')[1] == str(-lt + 1)]
             change_source = [c.split('_')[0] for c in change_dest]
             #pdb.set_trace()
@@ -90,7 +90,7 @@ def nested_CV_SVR_predict(daily_input, C, eps, t_length, t_unit, n_splits, test_
             #predict
             target[f'climTP_lt{lt}'] = svr_model_tuned.predict(X_climTP)
 
-            # modify the X matrix by substituting the climatology to the extreme (25th and 75th quantiles) meteo vars for lt months.
+            # modify the X matrix by substituting the climatology to the extreme (25th and 75th quantiles) meteo vars for lt.
             change_source_25 = []
             change_source_75 = []
             #modify the source, by taking the daily climathological data referred to the quantiles situations

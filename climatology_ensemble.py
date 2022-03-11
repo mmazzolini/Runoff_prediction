@@ -167,10 +167,12 @@ def daily_climatology_p_et_ensemble(daily_input,t_unit,radius=2/3):
     runoff_t_unit = runoff.rolling(30, min_periods=30).mean()
 
     
-    # Compute the t_unit days average temperature
+    # Compute the t_unit days average temperature, snow water equivalent and the sum for the evapotranspiration.
     if not other.empty:
         other_t_unit = other.rolling(t_unit, min_periods=t_unit).mean()
-
+        other_t_unit[[c for c in other_t_unit.columns if c[0]=='E']] = other_t_unit[[c for c in other_t_unit.columns if c[0]=='E']]*t_unit
+        
+       
     # Compute the t_unit days sum precipitation
     if not prec.empty:
         prec_t_unit = prec.rolling(t_unit, min_periods=t_unit).sum()
@@ -196,7 +198,7 @@ def daily_climatology_p_et_ensemble(daily_input,t_unit,radius=2/3):
 
     for i in range(1,367):
 
-        #get dates where the dayofyear is ==1 for the 3 variables
+        #get dates where the dayofyear is ==i for the 3 variables
         day_i=(prec_t_unit.index.dayofyear==i)
         prec_t_unit_i=prec_t_unit[day_i]
         other_t_unit_i=other_t_unit[day_i]
