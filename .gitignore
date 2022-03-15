@@ -18,7 +18,3 @@ __pycache__/test.cpython-39.pyc
 trial.tif
 STATIONS_HEIGHT_emilia.csv
 STATIONS_HEIGHT.csv
-model_predict/climatology/ADO_DSC_CH03_0075.csv
-model_predict/climatology/ADO_DSC_AT31_0254.csv
-model_predict/climatology/ADO_DSC_AT31_0206.csv
-model_predict/climatology/ADO_DSC_AT12_0280.csv
