@@ -1,6 +1,6 @@
 # Experiments with PCA and spatial statistics
 
-In this folder I grouped the notebook where I compared the performance of Support Vector Regressors with 4 different input preprocessings.
+In this folder I grouped the notebooks where I compared the performance of Support Vector Regressors with 4 different input preprocessings.
 Moreover, for each investigated basin, averaging window with various size (of 30, 15, 10 and 5 days) is carried out.
 This analysis has been carried out before snow-grid data was made available.
 
