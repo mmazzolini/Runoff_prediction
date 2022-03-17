@@ -106,6 +106,100 @@ def readnetcdf_in_shp_db(nc_fileName, STAT_CODE, res=5500, plot=False):
     
     return ds
 
+def readnetcdfS_in_shp_db(src_folder, STAT_CODE, res=5500, plot=False):
+
+
+    # CONCATENATE THE netcdf FILES IN THE  src_folder
+    
+    filenames = next(walk(src_folder), (None, None, []))[2]  # [] if no file
+    
+
+    # Open the shape file and reproject it to the MESCAN-Surfex grid (unit=meters)
+    conn = psycopg2.connect(host="10.8.244.31",
+                       database="climate_data",
+                       user="ado_user",
+                       password="hydro#ado",
+                       port=5432)
+
+    cur = conn.cursor()
+    
+    # get the OUTLINE
+    query = f"""
+            SELECT "geom" FROM "hydrology"."catchment_area" WHERE "id_station" = '{STAT_CODE}'
+            """
+    df = pd.read_sql_query(query,conn)
+    
+    # close the connection when finished
+    cur.close()
+    conn.close()
+    
+    
+    shp=GeoSeries(wkb.loads(df.geom[0], hex=True))
+    shp=shp.set_crs("EPSG:4326")
+    shp_reproj = shp.to_crs('+proj=lcc +lat_1=50 +lat_2=50 +lat_0=50 +lon_0=8 +x_0=2937018.5829291 +y_0=2937031.41074803 +a=6371229 +b=6371229')
+    bb = shp_reproj.bounds.iloc[0]
+
+
+    #concatenate the datasets for the extent of the shapefile.
+    c=0
+    for i in filenames:
+        if c==0:
+            ds = xr.open_dataset(src_folder+i)
+   
+            # Crop ds with the shapefile bounding box (bb)
+            ds = ds.sel(x=slice(bb['minx']-res, bb['maxx']+res), 
+                        y=slice(bb['miny']-res, bb['maxy']+res))
+
+        else:
+            ds_add = xr.open_dataset(src_folder+i)           
+
+            # Crop ds with the shapefile bounding box (bb)
+            ds_add = ds_add.sel(x=slice(bb['minx']-res, bb['maxx']+res), 
+                        y=slice(bb['miny']-res, bb['maxy']+res))
+                        
+            ds=xr.concat([ds, ds_add], dim="time")
+            
+        c=c+1
+            
+            
+            
+    #0000 Mask all the points in ds where the grid box do not intersect or is in the shapefile
+    for i in ds.x.values:
+        for j in ds.y.values:
+            gridbox = Point(i, j)#.buffer(res/2, cap_style=3)
+            if not (gridbox.intersects(shp_reproj.loc[0])):
+                for k in ds.data_vars.keys():
+                    if not (k =='Lambert_Conformal' or k=='time_bnds'):
+                        ds[k].loc[dict(x=i, y=j)] = np.nan
+    ds = ds.dropna(dim='x', how='all')
+    ds = ds.dropna(dim='y', how='all')
+    
+    counter=0                    
+    # Plot the era5 gridbox and the shapefile if plot=True
+    if plot:
+        plt.figure(figsize=(25,25))
+        for x in ds.x.values:
+            for y in ds.y.values:
+                gridbox = Point(x, y).buffer(res / 2, cap_style=3)
+                gridbox_x, gridbox_y = gridbox.exterior.xy
+                plt.plot(gridbox_x, gridbox_y, color='blue')
+                for k in ds.data_vars.keys():
+                    if not (k =='Lambert_Conformal' or k=='time_bnds'):
+                        if not(ds[k].loc[dict(x=x, y=y)].isnull().all()):
+                            plt.plot(x, y, marker='o', color='red')
+                            counter=counter+1
+        print(f'n of pixels{counter}')
+
+        coords=[p.exterior.xy for p in shp_reproj.loc[0]]
+        shp_x=coords[0][0]
+        shp_y=coords[0][1]
+        #shp_x, shp_y = *shp_reproj.loc[0].exterior.xy
+        plt.plot(shp_x, shp_y, color='black')
+        plt.axis('equal')                        
+    
+    return ds
+
+
 
 def xarray2df(xa, varnamedest,varnameor=False):
     if not varnameor:
@@ -212,9 +306,6 @@ def readsnow_in_shp_db(src_folder,mask_file, STAT_CODE, res=5500, plot=False):
     
     filenames = next(walk(src_folder), (None, None, []))[2]  # [] if no file
     
-
-
-
     # OPEN THE MASK FILE AND CLIP-OUT THE GLACIER PIXELS
     
     mask=xr.open_dataset(mask_file)

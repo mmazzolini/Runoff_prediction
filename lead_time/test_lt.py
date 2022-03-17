@@ -229,7 +229,7 @@ def plot_prediction(prediction,t_unit):
 
         plt.ylabel('{t_unit} days discharge average [m^3/sec]')
 
-        plt.legend(['TRUE DISCHARGE', 'DISCHARGE CLIMATOLOGY', 'LEAD TIME = 0', 'LEAD TIME = 1'])    
+        plt.legend(['TRUE DISCHARGE', 'DISCHARGE CLIMATOLOGY', 'LEAD TIME = 1'])    
         plt.title("Precipitation variability(Q= 25 and 75) mapped on the prediction discharge")
     return;
 
